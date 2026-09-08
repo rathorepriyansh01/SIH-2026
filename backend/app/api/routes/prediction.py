@@ -21,7 +21,7 @@ async def predict_crop_disease_endpoint(
         
     try:
         contents = await image.read()
-        result = process_prediction_request(contents, image.filename, db=db)
+        result = process_prediction_request(contents, image.filename)
         return result
     except HTTPException as he:
         raise he
