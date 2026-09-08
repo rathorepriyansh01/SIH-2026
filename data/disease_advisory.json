@@ -1,0 +1,146 @@
+{
+  "Healthy": {
+    "crop": "Tomato",
+    "disease": "Healthy",
+    "risk_level": "None",
+    "description": "The crop foliage shows vibrant green color, strong leaf tissue integrity, and no visible symptoms of fungal, bacterial, or viral infection.",
+    "symptoms": [
+      "Uniform green leaves",
+      "No spotting, wilting, or discoloration",
+      "Robust stem and branch structure"
+    ],
+    "possible_causes": [
+      "Optimal soil nutrient balance",
+      "Adequate water management",
+      "Good air circulation and sunlight exposure"
+    ],
+    "recommended_actions": {
+      "immediate_actions": [
+        "Continue current crop care and irrigation schedule.",
+        "Maintain regular monitoring to catch early signs of pest or fungal pressure."
+      ],
+      "prevention": [
+        "Apply balanced N-P-K fertilizer as per soil test recommendations.",
+        "Maintain clean weeding around plant bases.",
+        "Ensure proper drip or ground-level irrigation to keep foliage dry."
+      ],
+      "when_to_seek_expert_help": "No expert intervention required at this stage. Keep monitoring periodically."
+    }
+  },
+  "Early Blight": {
+    "crop": "Tomato",
+    "disease": "Early Blight",
+    "risk_level": "Moderate",
+    "description": "A common fungal disease caused by Alternaria solani. It primary affects foliage, stems, and fruits, starting on older lower leaves.",
+    "symptoms": [
+      "Dark brown circular spots with concentric rings ('target board' pattern)",
+      "Yellow halos surrounding brown leaf spots",
+      "Lower leaves yellowing and dropping off prematurely"
+    ],
+    "possible_causes": [
+      "High humidity combined with warm temperatures (24-29°C)",
+      "Spores surviving in contaminated crop debris or soil",
+      "Foliage wetness from overhead watering"
+    ],
+    "recommended_actions": {
+      "immediate_actions": [
+        "Prune and destroy heavily infected lower leaves to reduce spore count.",
+        "Avoid overhead irrigation; water directly at the plant root zone.",
+        "Mulch around the base of plants to prevent soil splash onto lower leaves."
+      ],
+      "prevention": [
+        "Practice 3-4 year crop rotation with non-solanaceous crops.",
+        "Maintain adequate spacing between plants to maximize airflow.",
+        "Use bio-fungicides like Trichoderma viride or organic Copper-based sprays during early growth stages."
+      ],
+      "when_to_seek_expert_help": "Consult your local Krishi Vigyan Kendra (KVK) or agriculture officer if leaf defoliation exceeds 25% of the canopy."
+    }
+  },
+  "Late Blight": {
+    "crop": "Tomato",
+    "disease": "Late Blight",
+    "risk_level": "High",
+    "description": "A destructive water-mold (oomycete) infection caused by Phytophthora infestans. It can destroy entire crops within days under cool, wet conditions.",
+    "symptoms": [
+      "Large, irregular water-soaked pale green to dark brown patches on leaves",
+      "White cottony fungal growth on the undersides of leaves in humid conditions",
+      "Rapidly wilting and collapsing foliage, dark stem lesions"
+    ],
+    "possible_causes": [
+      "Cool, moist weather (15-22°C) with fog or relative humidity >90%",
+      "Wind-blown spores traveling from infected nearby fields",
+      "Infected seed tubers or volunteer plants nearby"
+    ],
+    "recommended_actions": {
+      "immediate_actions": [
+        "Isolate and remove severely infected plants immediately.",
+        "Stop all overhead watering to prevent spore dispersal.",
+        "Apply approved protective fungicides such as Mancozeb or Copper Oxychloride as recommended by local guidelines."
+      ],
+      "prevention": [
+        "Plant late-blight resistant tomato varieties.",
+        "Ensure excellent field drainage and wide row spacing.",
+        "Destroy crop residues promptly after harvest."
+      ],
+      "when_to_seek_expert_help": "Immediate expert consultation recommended as Late Blight spreads rapidly and threatens neighboring fields."
+    }
+  },
+  "Leaf Mold": {
+    "crop": "Tomato",
+    "disease": "Leaf Mold",
+    "risk_level": "Moderate",
+    "description": "A fungal disease caused by Passalora fulva (syn. Cladosporium fulvum), common in high humidity environments and greenhouses.",
+    "symptoms": [
+      "Pale green or yellow spots on the upper leaf surface",
+      "Olive-green to velvety brown mold growth on the lower leaf surface",
+      "Infected leaves wither and drop off prematurely"
+    ],
+    "possible_causes": [
+      "High relative humidity above 85%",
+      "Poor air circulation around foliage",
+      "Moderate temperatures (20-25°C)"
+    ],
+    "recommended_actions": {
+      "immediate_actions": [
+        "Improve airflow by pruning lower suckers and dense branches.",
+        "Reduce ambient humidity by widening vent openings or spacing.",
+        "Remove affected leaves carefully to avoid shaking spores into the air."
+      ],
+      "prevention": [
+        "Use leaf-mold resistant cultivars.",
+        "Sterilize plant stakes and trellising material between seasons.",
+        "Apply bio-agents like Bacillus subtilis as a preventative spray."
+      ],
+      "when_to_seek_expert_help": "Seek guidance if mold spreads to upper canopy leaves or fruit stems."
+    }
+  },
+  "Septoria Leaf Spot": {
+    "crop": "Tomato",
+    "disease": "Septoria Leaf Spot",
+    "risk_level": "Moderate",
+    "description": "A fungal disease caused by Septoria lycopersici. It causes severe leaf spot and defoliation, reducing fruit yields and exposing fruit to sunscald.",
+    "symptoms": [
+      "Numerous small, circular spots (2-3 mm) with dark brown borders and grey centers",
+      "Tiny black dots (pycnidia) inside the centers of mature spots",
+      "Progressive yellowing and leaf loss starting from lower foliage upward"
+    ],
+    "possible_causes": [
+      "Frequent rainfall or wet leaves for extended periods",
+      "Spores splashing from soil or infected debris",
+      "Temperatures between 20°C and 25°C"
+    ],
+    "recommended_actions": {
+      "immediate_actions": [
+        "Pick off affected lower leaves as soon as spots appear.",
+        "Apply organic mulch (straw or plastic) to prevent soil splash.",
+        "Avoid working in the field while plants are wet."
+      ],
+      "prevention": [
+        "Clean equipment and stakes with mild disinfectant.",
+        "Rotate crops every 2-3 years away from nightshade family plants.",
+        "Utilize preventative copper or sulphur formulations."
+      ],
+      "when_to_seek_expert_help": "Consult an agricultural extension specialist if spotting spreads past mid-level branches."
+    }
+  }
+}
