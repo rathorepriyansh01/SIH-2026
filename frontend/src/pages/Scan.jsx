@@ -17,7 +17,7 @@ export default function Scan() {
     try {
       const data = await predictCropDisease(file);
       setIsLoading(false);
-      if (data.success) {
+      if (data && data.disease) {
         // Navigate to result page passing state
         navigate('/result', { state: { resultData: data } });
       } else {
@@ -54,3 +54,15 @@ export default function Scan() {
     </div>
   );
 }
+
+const convertToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.readAsDataURL(file);
+
+    reader.onload = () => resolve(reader.result);
+
+    reader.onerror = (error) => reject(error);
+  });
+};
