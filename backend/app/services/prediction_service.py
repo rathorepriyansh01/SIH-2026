@@ -4,7 +4,7 @@ from PIL import Image
 from app.ml.inference import predict_crop_disease
 
 
-async def process_prediction_request(file, db=None):
+async def process_prediction_request(file):
 
     # Read uploaded file
     image_bytes = await file.read()

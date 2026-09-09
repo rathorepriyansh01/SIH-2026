@@ -5,7 +5,7 @@ from typing import List
 from app.database.database import get_db
 from app.database.models import ScanHistory
 from app.services.advisory_service import AdvisoryService
-
+from app.api.routes import prediction, history
 router = APIRouter()
 
 @router.get("/history", status_code=status.HTTP_200_OK)
