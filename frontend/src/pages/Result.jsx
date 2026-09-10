@@ -1,12 +1,17 @@
 import React from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
+
 import {
   ArrowLeft,
   RefreshCw,
   AlertTriangle,
   Image as ImageIcon,
   CheckCircle,
-  Activity
+  Activity,
+  ShieldCheck,
+  Eye,
+  Sparkles,
+  Stethoscope
 } from 'lucide-react';
 
 export default function Result() {
@@ -18,10 +23,11 @@ export default function Result() {
 
   console.log("RESULT DATA:", resultData);
 
-  // Agar direct result page open kiya gaya ho
+  // Direct result page access
   if (!resultData) {
     return (
       <div className="max-w-md mx-auto my-16 text-center glass-panel p-8 rounded-3xl border border-slate-800 space-y-4">
+
         <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto" />
 
         <h2 className="text-xl font-bold text-white">
@@ -38,27 +44,46 @@ export default function Result() {
         >
           Go to Scan Page
         </Link>
+
       </div>
     );
   }
 
-  // Backend Response
-  const disease = resultData.disease || "Unknown Disease";
-  const confidence = Number(resultData.confidence || 0);
-  const topPredictions = resultData.top_predictions || [];
+  // =========================
+  // BACKEND RESPONSE
+  // =========================
 
-  // Clean disease name
+  const disease = resultData.disease || "Unknown Disease";
+
+  const confidence = Number(
+    resultData.confidence || 0
+  );
+
+  const topPredictions =
+    resultData.top_predictions || [];
+
+  const advisory =
+    resultData.advisory || {};
+
+  // =========================
+  // CLEAN DISEASE NAME
+  // =========================
+
   const cleanDiseaseName = (name) => {
     if (!name) return "Unknown Disease";
 
     return name
       .replace("Tomato___", "")
-      .replace(/_/g, " ");
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
   const diseaseName = cleanDiseaseName(disease);
 
-  // Confidence status
+  // =========================
+  // CONFIDENCE STATUS
+  // =========================
+
   let confidenceStatus = "Low";
 
   if (confidence >= 80) {
@@ -67,11 +92,50 @@ export default function Result() {
     confidenceStatus = "Medium";
   }
 
+  // =========================
+  // ADVISORY DATA
+  // =========================
+
+  const summary =
+    advisory.summary ||
+    "AI advisory information is currently unavailable.";
+
+  const riskLevel =
+    advisory.risk_level || "Unknown";
+
+  const severity =
+    advisory.severity || "Unknown";
+
+  const immediateActions =
+    Array.isArray(advisory.immediate_actions)
+      ? advisory.immediate_actions
+      : [];
+
+  const preventionTips =
+    Array.isArray(advisory.prevention_tips)
+      ? advisory.prevention_tips
+      : [];
+
+  const monitoringAdvice =
+    advisory.monitoring_advice ||
+    "Continue monitoring the crop regularly.";
+
+  const expertConsultationRequired =
+    advisory.expert_consultation_required === true;
+
+  const confidenceNote =
+    advisory.confidence_note ||
+    `The ML model prediction confidence is ${confidence.toFixed(2)}%.`;
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
 
-      {/* HEADER */}
+      {/* =====================================
+          HEADER
+      ====================================== */}
+
       <div className="flex items-center justify-between">
+
         <button
           onClick={() => navigate('/scan')}
           className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors"
@@ -87,46 +151,64 @@ export default function Result() {
           <RefreshCw className="w-4 h-4" />
           New Scan
         </Link>
+
       </div>
 
 
-      {/* LOW CONFIDENCE WARNING */}
+      {/* =====================================
+          CONFIDENCE WARNING
+      ====================================== */}
+
       {confidence < 70 && (
+
         <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-4">
 
           <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0" />
 
           <div>
+
             <h4 className="text-sm font-bold text-amber-300">
-              Low Confidence Warning
+              Verification Recommended
             </h4>
 
             <p className="text-sm text-amber-200/80 mt-1">
-              Prediction confidence is below 70%. Please verify the disease
-              with an agricultural expert or upload a clearer leaf image.
+              The model confidence is {confidence.toFixed(2)}%.
+              Please verify the symptoms with an agricultural expert
+              or upload a clearer leaf image before taking major
+              treatment decisions.
             </p>
+
           </div>
 
         </div>
+
       )}
 
 
-      {/* MAIN RESULT */}
+      {/* =====================================
+          MAIN RESULT
+      ====================================== */}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {/* IMAGE */}
+
         <div className="glass-panel p-4 rounded-3xl border border-slate-800">
 
           <div className="rounded-2xl overflow-hidden bg-slate-950 aspect-square flex items-center justify-center border border-slate-800">
 
             {imageUrl ? (
+
               <img
                 src={imageUrl}
                 alt="Scanned tomato leaf"
                 className="w-full h-full object-cover"
               />
+
             ) : (
+
               <ImageIcon className="w-16 h-16 text-slate-700" />
+
             )}
 
           </div>
@@ -139,6 +221,7 @@ export default function Result() {
 
 
         {/* PREDICTION */}
+
         <div className="md:col-span-2 glass-panel p-8 rounded-3xl border border-slate-800">
 
           <div className="flex items-center gap-3 mb-6">
@@ -148,6 +231,7 @@ export default function Result() {
             </div>
 
             <div>
+
               <p className="text-sm text-slate-400">
                 AI DETECTED
               </p>
@@ -155,12 +239,14 @@ export default function Result() {
               <h1 className="text-3xl font-bold text-white">
                 {diseaseName}
               </h1>
+
             </div>
 
           </div>
 
 
           {/* CONFIDENCE */}
+
           <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
 
             <div className="flex justify-between mb-3">
@@ -179,7 +265,7 @@ export default function Result() {
             <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
 
               <div
-                className="bg-agri-500 h-full rounded-full"
+                className="bg-agri-500 h-full rounded-full transition-all duration-700"
                 style={{
                   width: `${Math.min(confidence, 100)}%`
                 }}
@@ -189,7 +275,252 @@ export default function Result() {
 
 
             <p className="text-xs text-slate-500 mt-3">
-              Confidence Level: {confidenceStatus}
+              Confidence Level:{" "}
+              <span className="text-slate-300 font-semibold">
+                {confidenceStatus}
+              </span>
+            </p>
+
+          </div>
+
+
+          {/* RISK + SEVERITY */}
+
+          <div className="grid grid-cols-2 gap-4 mt-5">
+
+            <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-800">
+
+              <p className="text-xs text-slate-500 uppercase">
+                Risk Level
+              </p>
+
+              <p className="text-lg font-bold text-amber-400 mt-1">
+                {riskLevel}
+              </p>
+
+            </div>
+
+
+            <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-800">
+
+              <p className="text-xs text-slate-500 uppercase">
+                Severity
+              </p>
+
+              <p className="text-lg font-bold text-white mt-1">
+                {severity}
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================
+          AI SUMMARY
+      ====================================== */}
+
+      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+
+        <div className="flex items-center gap-3 mb-5">
+
+          <div className="p-3 rounded-xl bg-purple-500/10">
+
+            <Sparkles className="w-6 h-6 text-purple-400" />
+
+          </div>
+
+          <div>
+
+            <h2 className="text-xl font-bold text-white">
+              AI Advisory
+            </h2>
+
+            <p className="text-xs text-slate-500">
+              Generated using ML prediction + AI reasoning
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
+
+          <p className="text-sm leading-7 text-slate-300">
+            {summary}
+          </p>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================
+          ACTION PLAN
+      ====================================== */}
+
+      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+
+        <h2 className="text-2xl font-bold text-white mb-6">
+          Crop Action Plan
+        </h2>
+
+
+        <div className="grid md:grid-cols-2 gap-8">
+
+          {/* IMMEDIATE ACTIONS */}
+
+          <div>
+
+            <div className="flex items-center gap-2 mb-4">
+
+              <CheckCircle className="w-5 h-5 text-agri-400" />
+
+              <h3 className="font-bold text-agri-400">
+                Immediate Actions
+              </h3>
+
+            </div>
+
+
+            <div className="space-y-4">
+
+              {immediateActions.length > 0 ? (
+
+                immediateActions.map((action, index) => (
+
+                  <div
+                    key={index}
+                    className="flex gap-3 text-sm text-slate-300"
+                  >
+
+                    <CheckCircle className="w-5 h-5 text-agri-400 shrink-0 mt-0.5" />
+
+                    <span>
+                      {action}
+                    </span>
+
+                  </div>
+
+                ))
+
+              ) : (
+
+                <p className="text-sm text-slate-500">
+                  No immediate actions available.
+                </p>
+
+              )}
+
+            </div>
+
+          </div>
+
+
+          {/* PREVENTION */}
+
+          <div>
+
+            <div className="flex items-center gap-2 mb-4">
+
+              <ShieldCheck className="w-5 h-5 text-agri-400" />
+
+              <h3 className="font-bold text-agri-400">
+                Prevention Tips
+              </h3>
+
+            </div>
+
+
+            <div className="space-y-4">
+
+              {preventionTips.length > 0 ? (
+
+                preventionTips.map((tip, index) => (
+
+                  <div
+                    key={index}
+                    className="flex gap-3 text-sm text-slate-300"
+                  >
+
+                    <ShieldCheck className="w-5 h-5 text-agri-400 shrink-0 mt-0.5" />
+
+                    <span>
+                      {tip}
+                    </span>
+
+                  </div>
+
+                ))
+
+              ) : (
+
+                <p className="text-sm text-slate-500">
+                  No prevention tips available.
+                </p>
+
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================
+          MONITORING
+      ====================================== */}
+
+      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+
+        <div className="flex items-center gap-3 mb-4">
+
+          <div className="p-3 rounded-xl bg-blue-500/10">
+
+            <Eye className="w-6 h-6 text-blue-400" />
+
+          </div>
+
+          <h2 className="text-xl font-bold text-white">
+            Monitoring Advice
+          </h2>
+
+        </div>
+
+
+        <p className="text-sm leading-7 text-slate-300">
+          {monitoringAdvice}
+        </p>
+
+      </div>
+
+
+      {/* =====================================
+          CONFIDENCE NOTE
+      ====================================== */}
+
+      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+
+        <div className="flex items-start gap-4">
+
+          <Activity className="w-6 h-6 text-agri-400 shrink-0" />
+
+          <div>
+
+            <h3 className="font-bold text-white mb-2">
+              Model Confidence Note
+            </h3>
+
+            <p className="text-sm leading-6 text-slate-400">
+              {confidenceNote}
             </p>
 
           </div>
@@ -199,47 +530,31 @@ export default function Result() {
       </div>
 
 
-      {/* TOP PREDICTIONS */}
-      {topPredictions.length > 0 && (
+      {/* =====================================
+          EXPERT CONSULTATION
+      ====================================== */}
 
-        <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+      {expertConsultationRequired && (
 
-          <h2 className="text-xl font-bold text-white mb-5">
-            Other Possible Predictions
-          </h2>
+        <div className="p-6 rounded-3xl bg-amber-500/10 border border-amber-500/30">
 
+          <div className="flex items-start gap-4">
 
-          <div className="space-y-3">
+            <Stethoscope className="w-7 h-7 text-amber-400 shrink-0" />
 
-            {topPredictions.map((item, index) => (
+            <div>
 
-              <div
-                key={index}
-                className="flex items-center justify-between bg-slate-900/60 p-4 rounded-xl border border-slate-800"
-              >
+              <h3 className="font-bold text-amber-300">
+                Expert Consultation Recommended
+              </h3>
 
-                <div className="flex items-center gap-3">
+              <p className="text-sm text-amber-200/80 mt-2 leading-6">
+                Consider confirming the diagnosis with a local
+                agricultural expert, agronomist, or extension officer
+                before applying treatment.
+              </p>
 
-                  <span className="text-agri-400 font-bold">
-                    #{index + 1}
-                  </span>
-
-                  <span className="text-slate-200">
-                    {cleanDiseaseName(item.disease)}
-                  </span>
-
-                </div>
-
-
-                <span className="font-bold text-white">
-
-                  {Number(item.confidence || 0).toFixed(2)}%
-
-                </span>
-
-              </div>
-
-            ))}
+            </div>
 
           </div>
 
@@ -248,87 +563,18 @@ export default function Result() {
       )}
 
 
-      {/* ADVISORY */}
-      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+      {/* =====================================
+          DISCLAIMER
+      ====================================== */}
 
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Crop Advisory & Action Plan
-        </h2>
+      <div className="text-center pb-6">
 
-
-        <div className="grid md:grid-cols-2 gap-6">
-
-
-          {/* IMMEDIATE ACTION */}
-          <div>
-
-            <h3 className="font-bold text-agri-400 mb-4">
-              Immediate Actions
-            </h3>
-
-
-            <div className="space-y-3">
-
-              {[
-                "Inspect nearby tomato plants for similar symptoms.",
-                "Remove severely infected leaves carefully.",
-                "Avoid unnecessary pesticide application.",
-                "Monitor the crop regularly for disease spread."
-              ].map((action, index) => (
-
-                <div
-                  key={index}
-                  className="flex gap-3 text-sm text-slate-300"
-                >
-
-                  <CheckCircle className="w-5 h-5 text-agri-400 shrink-0" />
-
-                  {action}
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-
-          {/* PREVENTION */}
-          <div>
-
-            <h3 className="font-bold text-agri-400 mb-4">
-              Prevention Tips
-            </h3>
-
-
-            <div className="space-y-3">
-
-              {[
-                "Maintain proper spacing between plants.",
-                "Avoid excessive moisture on leaves.",
-                "Ensure good air circulation.",
-                "Regularly inspect leaves for early symptoms."
-              ].map((tip, index) => (
-
-                <div
-                  key={index}
-                  className="flex gap-3 text-sm text-slate-300"
-                >
-
-                  <CheckCircle className="w-5 h-5 text-agri-400 shrink-0" />
-
-                  {tip}
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        </div>
+        <p className="text-xs text-slate-600 max-w-2xl mx-auto">
+          This AI-generated advisory is intended for decision support
+          and does not replace professional agricultural diagnosis.
+          Always follow locally approved product labels and expert
+          recommendations for crop treatment.
+        </p>
 
       </div>
 

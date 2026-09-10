@@ -31,3 +31,4 @@ def root():
     return {
         "message": "Crop Disease Detection API is running"
     }
+
