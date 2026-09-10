@@ -30,13 +30,16 @@ class LLMService:
         self,
         disease: str,
         confidence: float,
-        top_predictions: list
+        top_predictions: list,
+        context: dict
     ):
 
+        # Build prompt using ML prediction + context
         prompt = build_advisory_prompt(
             disease=disease,
             confidence=confidence,
-            top_predictions=top_predictions
+            top_predictions=top_predictions,
+            context=context
         )
 
 
@@ -49,7 +52,9 @@ class LLMService:
                     "role": "system",
                     "content": (
                         "You are a reliable agricultural advisory AI. "
-                        "Always return valid JSON only."
+                        "Always return valid JSON only. "
+                        "Do not override the ML disease prediction. "
+                        "Use the provided context when generating advice."
                     )
                 },
 
@@ -60,6 +65,7 @@ class LLMService:
             ],
 
             temperature=0.3,
+
             response_format={
                 "type": "json_object"
             }

@@ -10,23 +10,47 @@ const api = axios.create({
 });
 
 
-export const predictCropDisease = async (imageFile) => {
+export const predictCropDisease = async (
+  imageFile,
+  farmData
+) => {
+
   const formData = new FormData();
 
+  // Leaf image
   formData.append('file', imageFile);
 
+  // Farm context
+  formData.append(
+    'farm_data',
+    JSON.stringify(farmData)
+  );
+
   try {
-    const response = await api.post('/predict', formData);
+
+    const response = await api.post(
+      '/predict',
+      formData
+    );
 
     return response.data;
 
   } catch (error) {
 
-    console.error("Prediction API Error:", error);
+    console.error(
+      "Prediction API Error:",
+      error
+    );
 
-    console.error("Response:", error.response);
+    console.error(
+      "Response:",
+      error.response
+    );
 
-    console.error("Request:", error.request);
+    console.error(
+      "Request:",
+      error.request
+    );
 
     throw error;
   }
@@ -34,19 +58,27 @@ export const predictCropDisease = async (imageFile) => {
 
 
 export const getScanHistory = async () => {
+
   const response = await api.get('/history');
+
   return response.data;
 };
 
 
 export const getScanDetail = async (scanId) => {
-  const response = await api.get(`/history/${scanId}`);
+
+  const response = await api.get(
+    `/history/${scanId}`
+  );
+
   return response.data;
 };
 
 
 export const checkHealth = async () => {
+
   const response = await api.get('/health');
+
   return response.data;
 };
 
