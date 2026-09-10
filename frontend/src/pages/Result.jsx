@@ -71,8 +71,18 @@ const advisory =
   resultData.advisory || {};
 
 // Farm context
+// =========================
+// ENVIRONMENT & FARM CONTEXT
+// =========================
+
 const context =
   resultData.context || {};
+
+const weather =
+  context.weather || {};
+
+const FarmLocation =
+  context.location || {};
 
 const farm =
   context.farm || {};
@@ -321,6 +331,184 @@ const farm =
 
               <p className="text-lg font-bold text-white mt-1">
                 {severity}
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+      {/* =====================================
+          ENVIRONMENT & FARM CONTEXT
+      ====================================== */}
+
+      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+
+        <div className="flex items-center gap-3 mb-6">
+
+          <div className="p-3 rounded-xl bg-blue-500/10">
+            <Activity className="w-6 h-6 text-blue-400" />
+          </div>
+
+          <div>
+            <h2 className="text-xl font-bold text-white">
+              Farm & Environmental Context
+            </h2>
+
+            <p className="text-xs text-slate-500">
+              Information used for AI advisory
+            </p>
+          </div>
+
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+          {/* WEATHER */}
+
+          <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
+
+            <h3 className="font-bold text-white mb-4">
+              🌦️ Current Weather
+            </h3>
+
+            <div className="space-y-3 text-sm">
+
+              <p className="text-slate-400">
+                Temperature:
+                <span className="text-white font-semibold ml-2">
+                  {weather.temperature_c ?? "N/A"} °C
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Humidity:
+                <span className="text-white font-semibold ml-2">
+                  {weather.humidity_percent ?? "N/A"}%
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Rain:
+                <span className="text-white font-semibold ml-2">
+                  {weather.rain_mm ?? "N/A"} mm
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Wind Speed:
+                <span className="text-white font-semibold ml-2">
+                  {weather.wind_speed_kmh ?? "N/A"} km/h
+                </span>
+              </p>
+
+            </div>
+
+          </div>
+
+
+          {/* LOCATION */}
+
+          <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
+
+            <h3 className="font-bold text-white mb-4">
+              📍 Farm Location
+            </h3>
+
+            <div className="space-y-3 text-sm">
+
+              <p className="text-slate-400">
+                Latitude:
+                <span className="text-white font-semibold ml-2">
+                  {FarmLocation.latitude ?? "N/A"}
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Longitude:
+                <span className="text-white font-semibold ml-2">
+                  {FarmLocation.longitude ?? "N/A"}
+                </span>
+              </p>
+
+              {FarmLocation.city && (
+                <p className="text-slate-400">
+                  City:
+                  <span className="text-white font-semibold ml-2">
+                    {FarmLocation.city}
+                  </span>
+                </p>
+              )}
+
+              {FarmLocation.district && (
+                <p className="text-slate-400">
+                  District:
+                  <span className="text-white font-semibold ml-2">
+                    {FarmLocation.district}
+                  </span>
+                </p>
+              )}
+
+              {FarmLocation.state && (
+                <p className="text-slate-400">
+                  State:
+                  <span className="text-white font-semibold ml-2">
+                    {FarmLocation.state}
+                  </span>
+                </p>
+              )}
+
+            </div>
+
+          </div>
+
+
+          {/* FARM */}
+
+          <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
+
+            <h3 className="font-bold text-white mb-4">
+              🌱 Farm Information
+            </h3>
+
+            <div className="space-y-3 text-sm">
+
+              <p className="text-slate-400">
+                Area:
+                <span className="text-white font-semibold ml-2">
+                  {farm.area_acres ?? "N/A"} acres
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Crop Age:
+                <span className="text-white font-semibold ml-2">
+                  {farm.crop_age_days ?? "N/A"} days
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Growth Stage:
+                <span className="text-white font-semibold ml-2">
+                  {farm.growth_stage ?? "N/A"}
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Irrigation:
+                <span className="text-white font-semibold ml-2">
+                  {farm.irrigation_method ?? "N/A"}
+                </span>
+              </p>
+
+              <p className="text-slate-400">
+                Previous Disease:
+                <span className="text-white font-semibold ml-2">
+                  {farm.previous_disease ? "Yes" : "No"}
+                </span>
               </p>
 
             </div>

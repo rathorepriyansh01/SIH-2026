@@ -4,6 +4,8 @@ from PIL import Image
 from app.ml.inference import predict_crop_disease
 from app.services.llm_service import LLMService
 from app.services.context_service import build_context
+from app.services.weather_service import get_current_weather
+from app.services.location_service import reverse_geocode
 
 
 llm_service = LLMService()
@@ -45,10 +47,140 @@ async def process_prediction_request(
     # CONTEXT
     # =========================
 
+    # =========================
+    # LOCATION
+    # =========================
+
+    location = farm_data.get(
+        "location",
+        {}
+    )
+
+    latitude = location.get(
+        "latitude"
+    )
+
+    longitude = location.get(
+        "longitude"
+    )
+
+
+    # =========================
+    # REVERSE GEOCODING
+    # =========================
+
+    if latitude is not None and longitude is not None:
+
+        try:
+
+            location = reverse_geocode(
+                latitude=latitude,
+                longitude=longitude
+            )
+
+        except Exception as e:
+
+            print(
+                "Location API Error:",
+                e
+            )
+
+            # Keep coordinates if reverse
+            # geocoding fails
+
+            location = {
+                "latitude": latitude,
+                "longitude": longitude
+            }
+
+
+    # =========================
+    # WEATHER
+    # =========================
+
+    weather = {}
+
+    if latitude is not None and longitude is not None:
+
+        try:
+
+            weather = get_current_weather(
+                latitude=latitude,
+                longitude=longitude
+            )
+
+        except Exception as e:
+
+            print(
+                "Weather API Error:",
+                e
+            )
+
+            weather = {}
+
+
+    # =========================
+    # CLEAN FARM DATA
+    # =========================
+
+    clean_farm_data = {
+        key: value
+        for key, value in farm_data.items()
+        if key != "location"
+    }
+
+
+    # =========================
+    # BUILD CONTEXT
+    # =========================
+
     context = build_context(
-        weather={},
-        location={},
-        farm_data=farm_data
+        weather=weather,
+        location=location,
+        farm_data=clean_farm_data
+    )
+
+    latitude = location.get(
+        "latitude"
+    )
+
+    longitude = location.get(
+        "longitude"
+    )
+
+    weather = {}
+
+    if latitude is not None and longitude is not None:
+
+        try:
+
+            weather = get_current_weather(
+                latitude=latitude,
+                longitude=longitude
+            )
+
+        except Exception as e:
+
+            print(
+                "Weather API Error:",
+                e
+            )
+
+            weather = {}
+
+
+    # Remove location from farm data
+    clean_farm_data = {
+        key: value
+        for key, value in farm_data.items()
+        if key != "location"
+    }
+
+
+    context = build_context(
+        weather=weather,
+        location=location,
+        farm_data=clean_farm_data
     )
 
 
