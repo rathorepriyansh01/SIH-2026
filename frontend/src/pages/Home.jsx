@@ -18,7 +18,7 @@ export default function Home() {
         </h1>
 
         <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-8 leading-relaxed">
-          Crop Health AI leverages transfer learning deep neural networks to identify tomato foliage diseases in seconds, providing actionable disease advisory and management guidance.
+          Crop Health AI leverages transfer learning deep neural networks to identify  foliage diseases in seconds, providing actionable disease advisory and management guidance.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

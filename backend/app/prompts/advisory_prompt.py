@@ -28,7 +28,7 @@ the prediction, confidence information, and available context.
 ========================
 
 CROP:
-Tomato
+all types
 
 PRIMARY ML PREDICTION:
 {disease}

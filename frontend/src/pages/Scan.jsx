@@ -46,7 +46,7 @@ export default function Scan() {
     if (!selectedFile) {
 
       setError(
-        'Please select a tomato leaf image first.'
+        'Please select a  leaf image first.'
       );
 
       return;
@@ -167,7 +167,7 @@ export default function Scan() {
         <p className="text-sm text-slate-400">
 
           Upload a high-resolution image of a
-          tomato leaf to get instant disease
+           leaf to get instant disease
           diagnosis & management guide.
 
         </p>
@@ -201,7 +201,7 @@ export default function Scan() {
       {isLoading ? (
 
         <Loading
-          message="AI Model Analyzing Tomato Leaf Features..."
+          message="AI Model Analyzing  Leaf Features..."
         />
 
       ) : showFarmForm ? (
