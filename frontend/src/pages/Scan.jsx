@@ -8,22 +8,67 @@ import Loading from '../components/Loading';
 import { predictCropDisease } from '../services/api';
 import { AlertTriangle } from 'lucide-react';
 
+import { useLanguage } from '../i18n/LanguageContext';
+
 export default function Scan() {
+
+  const { language } = useLanguage();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Selected image temporarily store karenge
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // Farm form show/hide
   const [showFarmForm, setShowFarmForm] = useState(false);
 
   const navigate = useNavigate();
 
 
   // ========================================
-  // STEP 1: Image selected
+  // TRANSLATIONS
+  // ========================================
+
+  const text = language === 'hi'
+    ? {
+        title: 'फसल की पत्ती स्कैन करें',
+
+        description:
+          'तुरंत रोग की पहचान और प्रबंधन संबंधी मार्गदर्शन प्राप्त करने के लिए पत्ती की उच्च-रिज़ॉल्यूशन तस्वीर अपलोड करें।',
+
+        selectImage:
+          'कृपया पहले पत्ती की तस्वीर चुनें।',
+
+        analyzeError:
+          'तस्वीर का विश्लेषण नहीं हो सका। कृपया दोबारा प्रयास करें।',
+
+        loading:
+          'AI मॉडल पत्ती के फीचर्स का विश्लेषण कर रहा है...',
+
+        serverError:
+          'सर्वर से कनेक्शन में समस्या हुई।',
+      }
+    : {
+        title: 'Scan Crop Leaf',
+
+        description:
+          'Upload a high-resolution image of a leaf to get instant disease diagnosis & management guide.',
+
+        selectImage:
+          'Please select a leaf image first.',
+
+        analyzeError:
+          'Failed to analyze image. Please try again.',
+
+        loading:
+          'AI Model Analyzing Leaf Features...',
+
+        serverError:
+          'Server connection error.',
+      };
+
+
+  // ========================================
+  // STEP 1: IMAGE SELECTED
   // ========================================
 
   const handleImageSelected = (file) => {
@@ -32,22 +77,19 @@ export default function Scan() {
 
     setError(null);
 
-    // Image ke baad farm context form dikhao
     setShowFarmForm(true);
   };
 
 
   // ========================================
-  // STEP 2: Farm form submitted
+  // STEP 2: FARM FORM SUBMITTED
   // ========================================
 
   const handleAnalyze = async (farmData) => {
 
     if (!selectedFile) {
 
-      setError(
-        'Please select a  leaf image first.'
-      );
+      setError(text.selectImage);
 
       return;
     }
@@ -58,7 +100,7 @@ export default function Scan() {
     try {
 
       // ========================================
-      // Create image preview
+      // CREATE IMAGE PREVIEW
       // ========================================
 
       const imageUrl = await convertToBase64(
@@ -67,7 +109,7 @@ export default function Scan() {
 
 
       // ========================================
-      // Send IMAGE + FARM DATA to backend
+      // SEND IMAGE + FARM DATA
       // ========================================
 
       const data = await predictCropDisease(
@@ -83,7 +125,7 @@ export default function Scan() {
 
 
       // ========================================
-      // Check new backend response structure
+      // CHECK BACKEND RESPONSE
       // ========================================
 
       if (
@@ -96,10 +138,8 @@ export default function Scan() {
 
           state: {
 
-            // Complete backend response
             resultData: data,
 
-            // Uploaded image
             imageUrl: imageUrl
 
           }
@@ -108,9 +148,7 @@ export default function Scan() {
 
       } else {
 
-        setError(
-          'Failed to analyze image. Please try again.'
-        );
+        setError(text.analyzeError);
 
       }
 
@@ -126,10 +164,12 @@ export default function Scan() {
         err.response
       );
 
+
       const detail =
         err.response?.data?.detail ||
         err.message ||
-        'Server connection error.';
+        text.serverError;
+
 
       setError(detail);
 
@@ -151,34 +191,27 @@ export default function Scan() {
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
 
-      {/* ================================== */}
       {/* HEADER */}
-      {/* ================================== */}
 
       <div className="text-center">
 
         <h1 className="text-3xl font-extrabold text-white mb-2">
 
-          Scan Crop Leaf
+          {text.title}
 
         </h1>
 
 
         <p className="text-sm text-slate-400">
 
-          Upload a high-resolution image of a
-           leaf to get instant disease
-          diagnosis & management guide.
+          {text.description}
 
         </p>
 
       </div>
 
 
-
-      {/* ================================== */}
       {/* ERROR */}
-      {/* ================================== */}
 
       {error && (
 
@@ -193,22 +226,15 @@ export default function Scan() {
       )}
 
 
-
-      {/* ================================== */}
       {/* LOADING */}
-      {/* ================================== */}
 
       {isLoading ? (
 
         <Loading
-          message="AI Model Analyzing  Leaf Features..."
+          message={text.loading}
         />
 
       ) : showFarmForm ? (
-
-        /* ================================== */
-        /* FARM CONTEXT FORM */
-        /* ================================== */
 
         <FarmContextForm
           onSubmit={handleAnalyze}
@@ -216,10 +242,6 @@ export default function Scan() {
         />
 
       ) : (
-
-        /* ================================== */
-        /* IMAGE UPLOADER */
-        /* ================================== */
 
         <ImageUploader
           onAnalyze={handleImageSelected}
@@ -234,9 +256,8 @@ export default function Scan() {
 }
 
 
-
 // ========================================
-// Convert uploaded image to Base64
+// CONVERT IMAGE TO BASE64
 // ========================================
 
 const convertToBase64 = (file) => {
