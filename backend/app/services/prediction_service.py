@@ -234,7 +234,7 @@ async def process_prediction_request(
 
     return {
 
-        "crop": "Tomato",
+        "crop": "unknown",
 
         "detection": {
 

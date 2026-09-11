@@ -6,21 +6,21 @@ llm = LLMService()
 
 result = llm.generate_advisory(
 
-    disease="Tomato Early Blight",
+    disease=" Early Blight",
 
     confidence=82.5,
 
     top_predictions=[
         {
-            "disease": "Tomato Early Blight",
+            "disease": " Early Blight",
             "confidence": 82.5
         },
         {
-            "disease": "Tomato Late Blight",
+            "disease": " Late Blight",
             "confidence": 10.2
         },
         {
-            "disease": "Tomato Septoria Leaf Spot",
+            "disease": " Septoria Leaf Spot",
             "confidence": 4.8
         }
     ]

@@ -16,10 +16,10 @@ class AdvisoryService:
         if not advisory:
             # Fallback default advisory if class is missing
             return {
-                "crop": "Tomato",
+                "crop": "Unknown Crop",
                 "disease": disease_name,
                 "risk_level": "Moderate",
-                "description": f"Information for {disease_name} in Tomato crops.",
+                "description": f"Information for {disease_name} in Unknown crops.",
                 "symptoms": ["Leaf spotting or discoloration"],
                 "possible_causes": ["Environmental or pathogen factors"],
                 "recommended_actions": {

@@ -158,7 +158,7 @@ async def predict(
 
     crop = result.get(
         "crop",
-        "Tomato"
+        "Unknown Crop"
     )
 
     detection = result.get(
