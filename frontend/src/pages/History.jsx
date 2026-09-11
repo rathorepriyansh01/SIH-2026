@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 
 import Loading from "../components/Loading";
-
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function History() {
+  const { t } = useLanguage();
 
   const [historyList, setHistoryList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +28,6 @@ export default function History() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const navigate = useNavigate();
-
 
   // ============================================================
   // FETCH HISTORY
@@ -37,56 +37,39 @@ export default function History() {
     fetchHistory();
   }, []);
 
-
   const fetchHistory = async () => {
-
     setIsLoading(true);
     setError(null);
 
     try {
-
       const data = await getScanHistory();
 
       console.log("HISTORY API RESPONSE:", data);
 
       if (data?.success) {
-
         setHistoryList(
           Array.isArray(data.history)
             ? data.history
             : []
         );
-
       } else {
-
-        setError("Failed to load scan history.");
-
+        setError(t.history.loadError);
       }
-
     } catch (err) {
-
       console.error("HISTORY ERROR:", err);
 
-      setError(
-        "Could not connect to backend server."
-      );
-
+      setError(t.history.backendError);
     } finally {
-
       setIsLoading(false);
-
     }
   };
-
 
   // ============================================================
   // OPEN DETAILS
   // ============================================================
 
   const handleItemClick = async (scanId) => {
-
     try {
-
       console.log(
         "Loading scan details:",
         scanId
@@ -100,33 +83,23 @@ export default function History() {
       );
 
       if (data?.success) {
-
         navigate("/result", {
           state: {
             resultData: data,
           },
         });
-
       } else {
-
-        alert("Scan details not found.");
-
+        alert(t.history.scanDetailsNotFound);
       }
-
     } catch (err) {
-
       console.error(
         "DETAIL ERROR:",
         err
       );
 
-      alert(
-        "Failed to load full scan details."
-      );
-
+      alert(t.history.detailsError);
     }
   };
-
 
   // ============================================================
   // SEARCH
@@ -134,7 +107,6 @@ export default function History() {
 
   const filteredHistory = historyList.filter(
     (item) => {
-
       const disease = String(
         item?.disease || ""
       ).toLowerCase();
@@ -143,8 +115,7 @@ export default function History() {
         item?.crop || ""
       ).toLowerCase();
 
-      const query = searchQuery
-        .toLowerCase();
+      const query = searchQuery.toLowerCase();
 
       return (
         disease.includes(query) ||
@@ -153,13 +124,11 @@ export default function History() {
     }
   );
 
-
   // ============================================================
   // RENDER
   // ============================================================
 
   return (
-
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
 
       {/* ======================================================
@@ -175,19 +144,16 @@ export default function History() {
             <HistoryIcon className="w-8 h-8 text-agri-400" />
 
             <span>
-              Scan History
+              {t.history.title}
             </span>
 
           </h1>
 
           <p className="text-sm text-slate-400 mt-1">
-
-            View previous crop diagnostic scans & saved advisory records
-
+            {t.history.subtitle}
           </p>
 
         </div>
-
 
         {/* ====================================================
             SEARCH
@@ -211,7 +177,7 @@ export default function History() {
             onChange={(e) =>
               setSearchQuery(e.target.value)
             }
-            placeholder="Search by disease or crop..."
+            placeholder={t.history.searchPlaceholder}
             className="
               w-full
               pl-10
@@ -233,19 +199,15 @@ export default function History() {
 
       </div>
 
-
       {/* ======================================================
           LOADING
       ====================================================== */}
 
       {isLoading && (
-
         <Loading
-          message="Loading Scan History Database..."
+          message={t.history.loading}
         />
-
       )}
-
 
       {/* ======================================================
           ERROR
@@ -279,7 +241,6 @@ export default function History() {
         </div>
 
       )}
-
 
       {/* ======================================================
           EMPTY
@@ -318,7 +279,7 @@ export default function History() {
                 mb-1
               "
             >
-              No Scan Records Found
+              {t.history.noRecords}
             </h3>
 
             <p
@@ -330,15 +291,12 @@ export default function History() {
                 mb-6
               "
             >
-              You haven't scanned any crop leaves yet.
-              Upload a leaf image to generate your first
-              scan report.
+              {t.history.noRecordsDescription}
             </p>
 
           </div>
 
         )}
-
 
       {/* ======================================================
           HISTORY CARDS
@@ -361,10 +319,12 @@ export default function History() {
             {filteredHistory.map((item) => {
 
               const disease =
-                item?.disease || "Unknown Disease";
+                item?.disease ||
+                t.history.unknownDisease;
 
               const crop =
-                item?.crop || "Unknown Crop";
+                item?.crop ||
+                t.history.unknownCrop;
 
               const confidence =
                 Number(item?.confidence || 0);
@@ -377,10 +337,8 @@ export default function History() {
                   ? imagePath
                   : `${SERVER_URL}${imagePath}`;
 
-
               const isHealthy =
                 disease.toLowerCase() === "healthy";
-
 
               return (
 
@@ -470,7 +428,6 @@ export default function History() {
 
                       )}
 
-
                       {/* Disease Badge */}
 
                       <span
@@ -500,7 +457,6 @@ export default function History() {
 
                     </div>
 
-
                     {/* =================================================
                         CONTENT
                     ================================================= */}
@@ -520,7 +476,6 @@ export default function History() {
                         {crop}
                       </p>
 
-
                       <h3
                         className="
                           text-lg
@@ -533,7 +488,6 @@ export default function History() {
                         {disease}
                       </h3>
 
-
                       {/* Risk */}
 
                       {item?.risk_level && (
@@ -545,10 +499,13 @@ export default function History() {
                             mt-1
                           "
                         >
-                          Risk:{" "}
+
+                          {t.history.risk}:{" "}
+
                           <span className="text-slate-300">
                             {item.risk_level}
                           </span>
+
                         </p>
 
                       )}
@@ -556,7 +513,6 @@ export default function History() {
                     </div>
 
                   </div>
-
 
                   {/* =================================================
                       FOOTER
@@ -596,11 +552,10 @@ export default function History() {
                       <span>
                         {confidence.toFixed(1)}%
                         {" "}
-                        Confidence
+                        {t.history.confidence}
                       </span>
 
                     </div>
-
 
                     <div
                       className="
@@ -615,7 +570,7 @@ export default function History() {
                     >
 
                       <span>
-                        Details
+                        {t.history.details}
                       </span>
 
                       <ChevronRight
@@ -637,7 +592,5 @@ export default function History() {
         )}
 
     </div>
-
   );
-
 }

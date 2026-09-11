@@ -101,7 +101,7 @@ export default function ImageUploader({ onAnalyze, isLoading }) {
           </div>
 
           <h3 className="text-lg font-semibold text-white mb-1">
-            Upload Tomato Leaf Image
+            Upload  Leaf Image
           </h3>
           <p className="text-sm text-slate-400 mb-4 max-w-md mx-auto">
             Drag and drop your crop leaf photo here, or click to browse files

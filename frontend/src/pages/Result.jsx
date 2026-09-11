@@ -15,13 +15,32 @@ import {
 } from "lucide-react";
 
 import { SERVER_URL } from "../services/api";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Result() {
+  const { t, language } = useLanguage();
+
   const location = useLocation();
   const navigate = useNavigate();
 
   const resultData = location.state?.resultData;
   const passedImageUrl = location.state?.imageUrl;
+
+  /*
+   * Safe translation helper.
+   * Agar koi key missing ho to blank/undefined screen nahi hogi.
+   */
+  const tr = (key, fallback) => {
+    try {
+      const value = key
+        .split(".")
+        .reduce((obj, part) => obj?.[part], t);
+
+      return value || fallback;
+    } catch {
+      return fallback;
+    }
+  };
 
   // =====================================================
   // NO RESULT
@@ -30,22 +49,31 @@ export default function Result() {
   if (!resultData) {
     return (
       <div className="max-w-md mx-auto my-16 text-center glass-panel p-8 rounded-3xl border border-slate-800 space-y-4">
+
         <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto" />
 
         <h2 className="text-xl font-bold text-white">
-          No Result Data Available
+          {tr(
+            "result.noResult",
+            "No Result Data Available"
+          )}
         </h2>
 
         <p className="text-sm text-slate-400">
-          Please upload an image from the Scan page first.
+          {language === "hi"
+            ? "कृपया पहले स्कैन पेज से एक इमेज अपलोड करें।"
+            : "Please upload an image from the Scan page first."}
         </p>
 
         <Link
           to="/scan"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-agri-500 text-slate-950 font-bold text-sm"
         >
-          Go to Scan Page
+          {language === "hi"
+            ? "स्कैन पेज पर जाएँ"
+            : "Go to Scan Page"}
         </Link>
+
       </div>
     );
   }
@@ -53,21 +81,6 @@ export default function Result() {
   // =====================================================
   // SUPPORT BOTH API RESPONSE FORMATS
   // =====================================================
-
-  /*
-    New Scan response:
-
-    resultData.detection
-    resultData.advisory
-    resultData.context
-
-    History response:
-
-    resultData.prediction
-    resultData.recommended_actions
-    resultData.disease_information
-    resultData.scan_metadata
-  */
 
   const detection = resultData.detection || {};
   const prediction = resultData.prediction || {};
@@ -101,7 +114,7 @@ export default function Result() {
     detection.top_predictions || [];
 
   // =====================================================
-  // RISK LEVEL
+  // RISK
   // =====================================================
 
   const riskLevel =
@@ -125,7 +138,9 @@ export default function Result() {
   const summary =
     advisory.summary ||
     resultData.disease_information?.description ||
-    "AI advisory information is currently unavailable.";
+    (language === "hi"
+      ? "AI सलाह वर्तमान में उपलब्ध नहीं है।"
+      : "AI advisory information is currently unavailable.");
 
   // =====================================================
   // IMMEDIATE ACTIONS
@@ -135,9 +150,11 @@ export default function Result() {
     Array.isArray(advisory.immediate_actions)
       ? advisory.immediate_actions
       : Array.isArray(
-          resultData.recommended_actions?.immediate_actions
+          resultData.recommended_actions
+            ?.immediate_actions
         )
-      ? resultData.recommended_actions.immediate_actions
+      ? resultData.recommended_actions
+          .immediate_actions
       : [];
 
   // =====================================================
@@ -148,7 +165,8 @@ export default function Result() {
     Array.isArray(advisory.prevention_tips)
       ? advisory.prevention_tips
       : Array.isArray(
-          resultData.recommended_actions?.prevention
+          resultData.recommended_actions
+            ?.prevention
         )
       ? resultData.recommended_actions.prevention
       : [];
@@ -159,7 +177,9 @@ export default function Result() {
 
   const monitoringAdvice =
     advisory.monitoring_advice ||
-    "Continue monitoring the crop regularly.";
+    (language === "hi"
+      ? "फसल की नियमित रूप से निगरानी करते रहें।"
+      : "Continue monitoring the crop regularly.");
 
   // =====================================================
   // EXPERT CONSULTATION
@@ -174,9 +194,13 @@ export default function Result() {
 
   const confidenceNote =
     advisory.confidence_note ||
-    `The ML model prediction confidence is ${confidence.toFixed(
-      2
-    )}%.`;
+    (language === "hi"
+      ? `ML मॉडल की भविष्यवाणी की विश्वसनीयता ${confidence.toFixed(
+          2
+        )}% है।`
+      : `The ML model prediction confidence is ${confidence.toFixed(
+          2
+        )}%.`);
 
   // =====================================================
   // CONTEXT
@@ -195,7 +219,7 @@ export default function Result() {
     context.farm || {};
 
   // =====================================================
-  // HISTORY FARM DATA FALLBACK
+  // HISTORY METADATA
   // =====================================================
 
   const historyMetadata =
@@ -208,12 +232,14 @@ export default function Result() {
   const historyImagePath =
     historyMetadata.image_path;
 
-  let imageUrl = passedImageUrl || null;
+  let imageUrl =
+    passedImageUrl || null;
 
   if (!imageUrl && historyImagePath) {
-    imageUrl = historyImagePath.startsWith("http")
-      ? historyImagePath
-      : `${SERVER_URL}${historyImagePath}`;
+    imageUrl =
+      historyImagePath.startsWith("http")
+        ? historyImagePath
+        : `${SERVER_URL}${historyImagePath}`;
   }
 
   // =====================================================
@@ -237,6 +263,36 @@ export default function Result() {
     cleanDiseaseName(disease);
 
   // =====================================================
+  // HINDI DISEASE NAME
+  // =====================================================
+
+  const getDiseaseName = () => {
+    if (language !== "hi") {
+      return diseaseName;
+    }
+
+    const diseaseLower =
+      diseaseName.toLowerCase();
+
+    const diseaseMap = {
+      healthy: "स्वस्थ",
+      "early blight": "अगेती झुलसा",
+      "late blight": "पछेती झुलसा",
+      "leaf mold": "पत्ती फफूंदी",
+      "septoria leaf spot":
+        "सेप्टोरिया पत्ती धब्बा",
+    };
+
+    return (
+      diseaseMap[diseaseLower] ||
+      diseaseName
+    );
+  };
+
+  const displayDiseaseName =
+    getDiseaseName();
+
+  // =====================================================
   // CONFIDENCE STATUS
   // =====================================================
 
@@ -248,12 +304,62 @@ export default function Result() {
     confidenceStatus = "Medium";
   }
 
+  const confidenceStatusText =
+    language === "hi"
+      ? confidenceStatus === "High"
+        ? "उच्च"
+        : confidenceStatus === "Medium"
+        ? "मध्यम"
+        : "कम"
+      : confidenceStatus;
+
   // =====================================================
-  // FALLBACK FARM DATA
+  // RISK DISPLAY
   // =====================================================
 
-  const farmData =
-    farm || {};
+  const getRiskText = () => {
+    if (language !== "hi") {
+      return riskLevel;
+    }
+
+    const value =
+      String(riskLevel).toLowerCase();
+
+    if (value === "high") return "उच्च";
+    if (value === "medium") return "मध्यम";
+    if (value === "moderate") return "मध्यम";
+    if (value === "low") return "कम";
+    if (value === "none") return "कोई जोखिम नहीं";
+
+    return riskLevel;
+  };
+
+  const displayRisk =
+    getRiskText();
+
+  // =====================================================
+  // SEVERITY DISPLAY
+  // =====================================================
+
+  const getSeverityText = () => {
+    if (language !== "hi") {
+      return severity;
+    }
+
+    const value =
+      String(severity).toLowerCase();
+
+    if (value === "high") return "उच्च";
+    if (value === "medium") return "मध्यम";
+    if (value === "moderate") return "मध्यम";
+    if (value === "low") return "कम";
+    if (value === "unknown") return "अज्ञात";
+
+    return severity;
+  };
+
+  const displaySeverity =
+    getSeverityText();
 
   // =====================================================
   // RENDER
@@ -274,7 +380,9 @@ export default function Result() {
         >
           <ArrowLeft className="w-4 h-4" />
 
-          Scan Another Leaf
+          {language === "hi"
+            ? "दूसरी फसल स्कैन करें"
+            : "Scan Another Leaf"}
         </button>
 
         <Link
@@ -283,7 +391,9 @@ export default function Result() {
         >
           <RefreshCw className="w-4 h-4" />
 
-          New Scan
+          {language === "hi"
+            ? "नया स्कैन"
+            : "New Scan"}
         </Link>
 
       </div>
@@ -301,16 +411,21 @@ export default function Result() {
           <div>
 
             <h4 className="text-sm font-bold text-amber-300">
-              Verification Recommended
+              {language === "hi"
+                ? "सत्यापन की सलाह"
+                : "Verification Recommended"}
             </h4>
 
             <p className="text-sm text-amber-200/80 mt-1">
-              The model confidence is{" "}
-              {confidence.toFixed(2)}%.
-              Please verify the symptoms with an
-              agricultural expert or upload a clearer
-              leaf image before taking major treatment
-              decisions.
+
+              {language === "hi"
+                ? `मॉडल की विश्वसनीयता ${confidence.toFixed(
+                    2
+                  )}% है। कोई बड़ा उपचार निर्णय लेने से पहले लक्षणों की पुष्टि कृषि विशेषज्ञ से करें या अधिक स्पष्ट पत्ती की इमेज अपलोड करें।`
+                : `The model confidence is ${confidence.toFixed(
+                    2
+                  )}%. Please verify the symptoms with an agricultural expert or upload a clearer leaf image before taking major treatment decisions.`}
+
             </p>
 
           </div>
@@ -335,10 +450,15 @@ export default function Result() {
 
               <img
                 src={imageUrl}
-                alt="Scanned tomato leaf"
+                alt={
+                  language === "hi"
+                    ? "स्कैन की गई टमाटर की पत्ती"
+                    : "Scanned tomato leaf"
+                }
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.style.display = "none";
+                  e.currentTarget.style.display =
+                    "none";
                 }}
               />
 
@@ -351,7 +471,9 @@ export default function Result() {
           </div>
 
           <p className="text-xs text-slate-400 mt-4">
-            AI Crop Disease Analysis
+            {language === "hi"
+              ? "AI फसल रोग विश्लेषण"
+              : "AI Crop Disease Analysis"}
           </p>
 
         </div>
@@ -371,11 +493,13 @@ export default function Result() {
             <div>
 
               <p className="text-sm text-slate-400">
-                AI DETECTED
+                {language === "hi"
+                  ? "AI द्वारा पहचान"
+                  : "AI DETECTED"}
               </p>
 
               <h1 className="text-3xl font-bold text-white">
-                {diseaseName}
+                {displayDiseaseName}
               </h1>
 
             </div>
@@ -389,7 +513,9 @@ export default function Result() {
             <div className="flex justify-between mb-3">
 
               <span className="text-slate-400">
-                Prediction Confidence
+                {language === "hi"
+                  ? "भविष्यवाणी की विश्वसनीयता"
+                  : "Prediction Confidence"}
               </span>
 
               <span className="text-agri-400 font-bold">
@@ -404,7 +530,10 @@ export default function Result() {
                 className="bg-agri-500 h-full rounded-full transition-all duration-700"
                 style={{
                   width: `${Math.min(
-                    Math.max(confidence, 0),
+                    Math.max(
+                      confidence,
+                      0
+                    ),
                     100
                   )}%`,
                 }}
@@ -414,10 +543,14 @@ export default function Result() {
 
             <p className="text-xs text-slate-500 mt-3">
 
-              Confidence Level:{" "}
+              {language === "hi"
+                ? "विश्वसनीयता स्तर:"
+                : "Confidence Level:"}
+
+              {" "}
 
               <span className="text-slate-300 font-semibold">
-                {confidenceStatus}
+                {confidenceStatusText}
               </span>
 
             </p>
@@ -431,11 +564,13 @@ export default function Result() {
             <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-800">
 
               <p className="text-xs text-slate-500 uppercase">
-                Risk Level
+                {language === "hi"
+                  ? "जोखिम स्तर"
+                  : "Risk Level"}
               </p>
 
               <p className="text-lg font-bold text-amber-400 mt-1">
-                {riskLevel}
+                {displayRisk}
               </p>
 
             </div>
@@ -443,11 +578,13 @@ export default function Result() {
             <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-800">
 
               <p className="text-xs text-slate-500 uppercase">
-                Severity
+                {language === "hi"
+                  ? "गंभीरता"
+                  : "Severity"}
               </p>
 
               <p className="text-lg font-bold text-white mt-1">
-                {severity}
+                {displaySeverity}
               </p>
 
             </div>
@@ -475,11 +612,15 @@ export default function Result() {
           <div>
 
             <h2 className="text-xl font-bold text-white">
-              Farm & Environmental Context
+              {language === "hi"
+                ? "खेत और पर्यावरण की जानकारी"
+                : "Farm & Environmental Context"}
             </h2>
 
             <p className="text-xs text-slate-500">
-              Information used for AI advisory
+              {language === "hi"
+                ? "AI सलाह के लिए उपयोग की गई जानकारी"
+                : "Information used for AI advisory"}
             </p>
 
           </div>
@@ -493,13 +634,18 @@ export default function Result() {
           <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
 
             <h3 className="font-bold text-white mb-4">
-              🌦️ Current Weather
+              🌦️{" "}
+              {language === "hi"
+                ? "वर्तमान मौसम"
+                : "Current Weather"}
             </h3>
 
             <div className="space-y-3 text-sm">
 
               <p className="text-slate-400">
-                Temperature:
+                {language === "hi"
+                  ? "तापमान:"
+                  : "Temperature:"}
 
                 <span className="text-white font-semibold ml-2">
                   {weather.temperature_c ?? "N/A"} °C
@@ -507,7 +653,9 @@ export default function Result() {
               </p>
 
               <p className="text-slate-400">
-                Humidity:
+                {language === "hi"
+                  ? "नमी:"
+                  : "Humidity:"}
 
                 <span className="text-white font-semibold ml-2">
                   {weather.humidity_percent ?? "N/A"}%
@@ -515,7 +663,9 @@ export default function Result() {
               </p>
 
               <p className="text-slate-400">
-                Rain:
+                {language === "hi"
+                  ? "वर्षा:"
+                  : "Rain:"}
 
                 <span className="text-white font-semibold ml-2">
                   {weather.rain_mm ?? "N/A"} mm
@@ -523,7 +673,9 @@ export default function Result() {
               </p>
 
               <p className="text-slate-400">
-                Wind Speed:
+                {language === "hi"
+                  ? "हवा की गति:"
+                  : "Wind Speed:"}
 
                 <span className="text-white font-semibold ml-2">
                   {weather.wind_speed_kmh ?? "N/A"} km/h
@@ -539,13 +691,18 @@ export default function Result() {
           <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
 
             <h3 className="font-bold text-white mb-4">
-              📍 Farm Location
+              📍{" "}
+              {language === "hi"
+                ? "खेत का स्थान"
+                : "Farm Location"}
             </h3>
 
             <div className="space-y-3 text-sm">
 
               <p className="text-slate-400">
-                Latitude:
+                {language === "hi"
+                  ? "अक्षांश:"
+                  : "Latitude:"}
 
                 <span className="text-white font-semibold ml-2">
                   {farmLocation.latitude ?? "N/A"}
@@ -553,7 +710,9 @@ export default function Result() {
               </p>
 
               <p className="text-slate-400">
-                Longitude:
+                {language === "hi"
+                  ? "देशांतर:"
+                  : "Longitude:"}
 
                 <span className="text-white font-semibold ml-2">
                   {farmLocation.longitude ?? "N/A"}
@@ -563,11 +722,15 @@ export default function Result() {
               {farmLocation.city && (
 
                 <p className="text-slate-400">
-                  City:
+
+                  {language === "hi"
+                    ? "शहर:"
+                    : "City:"}
 
                   <span className="text-white font-semibold ml-2">
                     {farmLocation.city}
                   </span>
+
                 </p>
 
               )}
@@ -575,11 +738,15 @@ export default function Result() {
               {farmLocation.district && (
 
                 <p className="text-slate-400">
-                  District:
+
+                  {language === "hi"
+                    ? "जिला:"
+                    : "District:"}
 
                   <span className="text-white font-semibold ml-2">
                     {farmLocation.district}
                   </span>
+
                 </p>
 
               )}
@@ -587,11 +754,15 @@ export default function Result() {
               {farmLocation.state && (
 
                 <p className="text-slate-400">
-                  State:
+
+                  {language === "hi"
+                    ? "राज्य:"
+                    : "State:"}
 
                   <span className="text-white font-semibold ml-2">
                     {farmLocation.state}
                   </span>
+
                 </p>
 
               )}
@@ -605,49 +776,72 @@ export default function Result() {
           <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
 
             <h3 className="font-bold text-white mb-4">
-              🌱 Farm Information
+              🌱{" "}
+              {language === "hi"
+                ? "खेत की जानकारी"
+                : "Farm Information"}
             </h3>
 
             <div className="space-y-3 text-sm">
 
               <p className="text-slate-400">
-                Area:
+                {language === "hi"
+                  ? "क्षेत्रफल:"
+                  : "Area:"}
 
                 <span className="text-white font-semibold ml-2">
-                  {farmData.area_acres ?? "N/A"} acres
+                  {farm.area_acres ?? "N/A"}{" "}
+                  {language === "hi"
+                    ? "एकड़"
+                    : "acres"}
                 </span>
               </p>
 
               <p className="text-slate-400">
-                Crop Age:
+                {language === "hi"
+                  ? "फसल की आयु:"
+                  : "Crop Age:"}
 
                 <span className="text-white font-semibold ml-2">
-                  {farmData.crop_age_days ?? "N/A"} days
+                  {farm.crop_age_days ?? "N/A"}{" "}
+                  {language === "hi"
+                    ? "दिन"
+                    : "days"}
                 </span>
               </p>
 
               <p className="text-slate-400">
-                Growth Stage:
+                {language === "hi"
+                  ? "विकास अवस्था:"
+                  : "Growth Stage:"}
 
                 <span className="text-white font-semibold ml-2">
-                  {farmData.growth_stage ?? "N/A"}
+                  {farm.growth_stage ?? "N/A"}
                 </span>
               </p>
 
               <p className="text-slate-400">
-                Irrigation:
+                {language === "hi"
+                  ? "सिंचाई:"
+                  : "Irrigation:"}
 
                 <span className="text-white font-semibold ml-2">
-                  {farmData.irrigation_method ?? "N/A"}
+                  {farm.irrigation_method ?? "N/A"}
                 </span>
               </p>
 
               <p className="text-slate-400">
-                Previous Disease:
+                {language === "hi"
+                  ? "पिछला रोग:"
+                  : "Previous Disease:"}
 
                 <span className="text-white font-semibold ml-2">
-                  {farmData.previous_disease
-                    ? "Yes"
+                  {farm.previous_disease
+                    ? language === "hi"
+                      ? "हाँ"
+                      : "Yes"
+                    : language === "hi"
+                    ? "नहीं"
                     : "No"}
                 </span>
               </p>
@@ -677,11 +871,15 @@ export default function Result() {
           <div>
 
             <h2 className="text-xl font-bold text-white">
-              AI Advisory
+              {language === "hi"
+                ? "AI सलाह"
+                : "AI Advisory"}
             </h2>
 
             <p className="text-xs text-slate-500">
-              Generated using ML prediction + AI reasoning
+              {language === "hi"
+                ? "ML भविष्यवाणी और AI विश्लेषण से तैयार"
+                : "Generated using ML prediction + AI reasoning"}
             </p>
 
           </div>
@@ -705,7 +903,9 @@ export default function Result() {
       <div className="glass-panel p-6 rounded-3xl border border-slate-800">
 
         <h2 className="text-2xl font-bold text-white mb-6">
-          Crop Action Plan
+          {language === "hi"
+            ? "फसल कार्य योजना"
+            : "Crop Action Plan"}
         </h2>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -719,7 +919,9 @@ export default function Result() {
               <CheckCircle className="w-5 h-5 text-agri-400" />
 
               <h3 className="font-bold text-agri-400">
-                Immediate Actions
+                {language === "hi"
+                  ? "तुरंत किए जाने वाले कार्य"
+                  : "Immediate Actions"}
               </h3>
 
             </div>
@@ -750,7 +952,9 @@ export default function Result() {
               ) : (
 
                 <p className="text-sm text-slate-500">
-                  No immediate actions available.
+                  {language === "hi"
+                    ? "कोई तत्काल कार्य उपलब्ध नहीं है।"
+                    : "No immediate actions available."}
                 </p>
 
               )}
@@ -768,7 +972,9 @@ export default function Result() {
               <ShieldCheck className="w-5 h-5 text-agri-400" />
 
               <h3 className="font-bold text-agri-400">
-                Prevention Tips
+                {language === "hi"
+                  ? "बचाव के उपाय"
+                  : "Prevention Tips"}
               </h3>
 
             </div>
@@ -799,7 +1005,9 @@ export default function Result() {
               ) : (
 
                 <p className="text-sm text-slate-500">
-                  No prevention tips available.
+                  {language === "hi"
+                    ? "कोई बचाव उपाय उपलब्ध नहीं है।"
+                    : "No prevention tips available."}
                 </p>
 
               )}
@@ -827,7 +1035,9 @@ export default function Result() {
           </div>
 
           <h2 className="text-xl font-bold text-white">
-            Monitoring Advice
+            {language === "hi"
+              ? "निगरानी संबंधी सलाह"
+              : "Monitoring Advice"}
           </h2>
 
         </div>
@@ -851,7 +1061,9 @@ export default function Result() {
           <div>
 
             <h3 className="font-bold text-white mb-2">
-              Model Confidence Note
+              {language === "hi"
+                ? "मॉडल विश्वसनीयता जानकारी"
+                : "Model Confidence Note"}
             </h3>
 
             <p className="text-sm leading-6 text-slate-400">
@@ -879,13 +1091,17 @@ export default function Result() {
             <div>
 
               <h3 className="font-bold text-amber-300">
-                Expert Consultation Recommended
+                {language === "hi"
+                  ? "विशेषज्ञ से परामर्श की सलाह"
+                  : "Expert Consultation Recommended"}
               </h3>
 
               <p className="text-sm text-amber-200/80 mt-2 leading-6">
-                Consider confirming the diagnosis with a
-                local agricultural expert, agronomist, or
-                extension officer before applying treatment.
+
+                {language === "hi"
+                  ? "उपचार करने से पहले स्थानीय कृषि विशेषज्ञ, कृषि वैज्ञानिक या विस्तार अधिकारी से निदान की पुष्टि करने पर विचार करें।"
+                  : "Consider confirming the diagnosis with a local agricultural expert, agronomist, or extension officer before applying treatment."}
+
               </p>
 
             </div>
@@ -903,11 +1119,11 @@ export default function Result() {
       <div className="text-center pb-6">
 
         <p className="text-xs text-slate-600 max-w-2xl mx-auto">
-          This AI-generated advisory is intended for
-          decision support and does not replace professional
-          agricultural diagnosis. Always follow locally
-          approved product labels and expert recommendations
-          for crop treatment.
+
+          {language === "hi"
+            ? "यह AI द्वारा तैयार सलाह केवल निर्णय लेने में सहायता के लिए है और पेशेवर कृषि निदान का विकल्प नहीं है। फसल उपचार के लिए हमेशा स्थानीय रूप से स्वीकृत उत्पाद निर्देशों और विशेषज्ञ की सलाह का पालन करें।"
+            : "This AI-generated advisory is intended for decision support and does not replace professional agricultural diagnosis. Always follow locally approved product labels and expert recommendations for crop treatment."}
+
         </p>
 
       </div>
