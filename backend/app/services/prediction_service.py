@@ -6,6 +6,7 @@ from app.services.llm_service import LLMService
 from app.services.context_service import build_context
 from app.services.weather_service import get_current_weather
 from app.services.location_service import reverse_geocode
+from app.services.risk_service import calculate_risk
 
 
 llm_service = LLMService()
@@ -16,9 +17,9 @@ async def process_prediction_request(
     farm_data
 ):
 
-    # =========================
-    # READ IMAGE
-    # =========================
+    # =====================================================
+    # 1. READ IMAGE
+    # =====================================================
 
     image_bytes = await file.read()
 
@@ -27,9 +28,9 @@ async def process_prediction_request(
     ).convert("RGB")
 
 
-    # =========================
-    # ML PREDICTION
-    # =========================
+    # =====================================================
+    # 2. ML PREDICTION
+    # =====================================================
 
     result = predict_crop_disease(image)
 
@@ -43,31 +44,32 @@ async def process_prediction_request(
     )
 
 
-    # =========================
-    # CONTEXT
-    # =========================
+    # =====================================================
+    # 3. LOCATION
+    # =====================================================
 
-    # =========================
-    # LOCATION
-    # =========================
-
-    location = farm_data.get(
+    location_data = farm_data.get(
         "location",
         {}
     )
 
-    latitude = location.get(
+    latitude = location_data.get(
         "latitude"
     )
 
-    longitude = location.get(
+    longitude = location_data.get(
         "longitude"
     )
 
 
-    # =========================
-    # REVERSE GEOCODING
-    # =========================
+    # =====================================================
+    # 4. REVERSE GEOCODING
+    # =====================================================
+
+    location = {
+        "latitude": latitude,
+        "longitude": longitude
+    }
 
     if latitude is not None and longitude is not None:
 
@@ -78,6 +80,10 @@ async def process_prediction_request(
                 longitude=longitude
             )
 
+            # Make sure coordinates are preserved
+            location["latitude"] = latitude
+            location["longitude"] = longitude
+
         except Exception as e:
 
             print(
@@ -85,43 +91,38 @@ async def process_prediction_request(
                 e
             )
 
-            # Keep coordinates if reverse
-            # geocoding fails
 
-            location = {
-                "latitude": latitude,
-                "longitude": longitude
+    # =====================================================
+    # 5. WEATHER
+    # =====================================================
+
+    weather = {}
+
+    if latitude is not None and longitude is not None:
+
+        try:
+
+            weather = get_current_weather(
+                latitude=latitude,
+                longitude=longitude
+            )
+
+        except Exception as e:
+
+            print(
+                "Weather API Error:",
+                e
+            )
+
+            weather = {
+                "available": False,
+                "error": "Weather data unavailable"
             }
 
 
-    # =========================
-    # WEATHER
-    # =========================
-
-    weather = {}
-
-    if latitude is not None and longitude is not None:
-
-        try:
-
-            weather = get_current_weather(
-                latitude=latitude,
-                longitude=longitude
-            )
-
-        except Exception as e:
-
-            print(
-                "Weather API Error:",
-                e
-            )
-
-            weather = {}
-
-
-    # =========================
-    # CLEAN FARM DATA
-    # =========================
+    # =====================================================
+    # 6. CLEAN FARM DATA
+    # =====================================================
 
     clean_farm_data = {
         key: value
@@ -130,9 +131,9 @@ async def process_prediction_request(
     }
 
 
-    # =========================
-    # BUILD CONTEXT
-    # =========================
+    # =====================================================
+    # 7. BUILD AI CONTEXT
+    # =====================================================
 
     context = build_context(
         weather=weather,
@@ -140,53 +141,21 @@ async def process_prediction_request(
         farm_data=clean_farm_data
     )
 
-    latitude = location.get(
-        "latitude"
-    )
+    # =====================================================
+    # 8. DETERMINISTIC RISK CALCULATION
+    # =====================================================
 
-    longitude = location.get(
-        "longitude"
-    )
-
-    weather = {}
-
-    if latitude is not None and longitude is not None:
-
-        try:
-
-            weather = get_current_weather(
-                latitude=latitude,
-                longitude=longitude
-            )
-
-        except Exception as e:
-
-            print(
-                "Weather API Error:",
-                e
-            )
-
-            weather = {}
+    risk_assessment = calculate_risk(
+    disease=disease,
+    confidence=confidence,
+    weather=weather,
+    farm_data=clean_farm_data
+)
 
 
-    # Remove location from farm data
-    clean_farm_data = {
-        key: value
-        for key, value in farm_data.items()
-        if key != "location"
-    }
-
-
-    context = build_context(
-        weather=weather,
-        location=location,
-        farm_data=clean_farm_data
-    )
-
-
-    # =========================
-    # AI ADVISORY
-    # =========================
+    # =====================================================
+    # 8. AI ADVISORY
+    # =====================================================
 
     try:
 
@@ -199,14 +168,21 @@ async def process_prediction_request(
 
     except Exception as e:
 
-        print("LLM Advisory Error:", e)
+        print(
+            "LLM Advisory Error:",
+            e
+        )
 
         advisory = {
-            "summary": "AI advisory is currently unavailable.",
 
-            "risk_level": "Unknown",
+            "summary":
+                "AI advisory is currently unavailable.",
 
-            "severity": "Unknown",
+            "risk_level":
+                "Unknown",
+
+            "severity":
+                "Unknown",
 
             "immediate_actions": [
                 "Consult a local agricultural expert."
@@ -216,38 +192,48 @@ async def process_prediction_request(
                 "Continue monitoring the affected plant."
             ],
 
-            "monitoring_advice": (
-                "Monitor the crop regularly for changes."
-            ),
+            "monitoring_advice":
+                "Monitor the crop regularly for changes.",
 
-            "expert_consultation_required": True,
+            "expert_consultation_required":
+                True,
 
-            "confidence_note": (
+            "confidence_note":
                 "AI advisory could not be generated."
-            )
+
         }
 
+    
 
-    # =========================
-    # FINAL RESPONSE
-    # =========================
+
+    # =====================================================
+    # 9. FINAL RESPONSE
+    # =====================================================
 
     return {
 
-        "crop": "unknown",
+    "success": True,
 
-        "detection": {
+    "crop": farm_data.get(
+        "crop",
+        "Tomato"
+    ),
 
-            "disease": disease,
+    "detection": {
 
-            "confidence": confidence,
+        "disease": disease,
 
-            "top_predictions": top_predictions
+        "confidence": confidence,
 
-        },
+        "top_predictions":
+            top_predictions
 
-        "context": context,
+    },
 
-        "advisory": advisory
+    "risk_assessment": risk_assessment,
 
-    }
+    "context": context,
+
+    "advisory": advisory
+
+}

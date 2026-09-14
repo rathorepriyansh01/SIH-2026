@@ -156,6 +156,10 @@ async def predict(
     # GET PREDICTION DATA
     # ========================================================
 
+    # ========================================================
+    # GET PREDICTION DATA
+    # ========================================================
+    
     crop = result.get(
         "crop",
         "Unknown Crop"
@@ -181,10 +185,19 @@ async def predict(
         {}
     )
 
-    risk_level = advisory.get(
+    risk_assessment = result.get(
+        "risk_assessment",
+        {}
+    )
+
+    risk_level = risk_assessment.get(
         "risk_level",
         "Unknown"
     )
+
+    print("\n========== RISK FROM PREDICTION SERVICE ==========")
+    print(risk_assessment)
+    print("====================================================\n")
 
 
     # ========================================================

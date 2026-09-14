@@ -96,7 +96,41 @@ def get_current_weather(
             e
         )
 
-        return {}
+        return {
+            "available": False,
+            "source": "Open-Meteo",
+            "error": "Weather data unavailable",
+            "current": {
+                "temperature_c": None,
+                "humidity_percent": None,
+                "precipitation_mm": None,
+                "rain_mm": None,
+                "wind_speed_kmh": None,
+                "wind_direction": None,
+                "weather_code": None,
+                "time": None
+            },
+            "previous_5_days": [],
+            "next_5_days": [],
+            "rain_summary": {
+                "rain_expected": None,
+                "rainy_days_count": 0,
+                "rainy_days": []
+            },
+            "rain_prediction": {
+                "summary": "Rain forecast data is unavailable.",
+                "rain_expected": None
+            },
+            "disease_weather_risk": {
+                "level": "Unknown",
+                "summary": "Weather data is unavailable, so disease weather risk cannot be assessed."
+            },
+            "pest_weather_risk": {
+                "level": "Unknown",
+                "summary": "Weather data is unavailable, so pest weather risk cannot be assessed."
+            },
+            "spraying_advice": []
+        }
 
 
     # ==================================================
@@ -207,6 +241,12 @@ def get_current_weather(
                 if i < len(rain_probability)
                 else None,
 
+            # Alias used by risk_service.py
+            "rain_probability":
+                rain_probability[i]
+                if i < len(rain_probability)
+                else 0,
+
             "max_wind_speed_kmh":
                 wind[i]
                 if i < len(wind)
@@ -243,7 +283,7 @@ def get_current_weather(
     # Index 5 onwards can include future days.
     # Today is normally around index 5 when past_days=5.
 
-    next_5_days = daily_weather[5:10]
+    next_5_days = daily_weather[6:11]
 
 
     # ==================================================
@@ -356,10 +396,80 @@ def get_current_weather(
 
 
     # ==================================================
+    # WEATHER RISK
+    # ==================================================
+
+    current_humidity = current.get("relative_humidity_2m")
+    current_temperature = current.get("temperature_2m")
+
+    high_humidity = (
+        current_humidity is not None
+        and float(current_humidity) >= 80
+    )
+
+    favorable_temperature = (
+        current_temperature is not None
+        and 15 <= float(current_temperature) <= 30
+    )
+
+    upcoming_rain = len(rainy_days) > 0
+
+    if high_humidity and (favorable_temperature or upcoming_rain):
+        disease_weather_level = "HIGH"
+        disease_weather_summary = (
+            "High humidity with favorable temperature or upcoming rain "
+            "may increase disease pressure."
+        )
+    elif high_humidity or favorable_temperature or upcoming_rain:
+        disease_weather_level = "MODERATE"
+        disease_weather_summary = (
+            "Some weather conditions may support disease development."
+        )
+    else:
+        disease_weather_level = "LOW"
+        disease_weather_summary = (
+            "Current weather conditions show relatively lower disease pressure."
+        )
+
+    if upcoming_rain:
+        rain_prediction = {
+            "summary": (
+                f"Rain is expected on {len(rainy_days)} of the next "
+                f"{len(next_5_days)} forecast days."
+            ),
+            "rain_expected": True
+        }
+    else:
+        rain_prediction = {
+            "summary": "No significant rain is expected in the available forecast.",
+            "rain_expected": False
+        }
+
+    # A weather-only pest assessment. It does not claim a specific pest
+    # diagnosis; it only describes whether weather may favor pest pressure.
+    if high_humidity and favorable_temperature:
+        pest_weather_level = "MODERATE"
+        pest_weather_summary = (
+            "Warm and humid conditions may support some pest activity; "
+            "inspect the crop regularly."
+        )
+    elif favorable_temperature:
+        pest_weather_level = "MODERATE"
+        pest_weather_summary = (
+            "Temperature may support pest activity; monitor the crop."
+        )
+    else:
+        pest_weather_level = "LOW"
+        pest_weather_summary = (
+            "Weather conditions show relatively lower pest pressure."
+        )
+
+    # ==================================================
     # FINAL RESPONSE
     # ==================================================
 
     return {
+        "available": True,
 
         "source":
             "Open-Meteo",
@@ -465,6 +575,31 @@ def get_current_weather(
                 ]
         },
 
+
+        # ==========================
+        # RAIN PREDICTION
+        # ==========================
+
+        "rain_prediction":
+            rain_prediction,
+
+        # ==========================
+        # DISEASE WEATHER RISK
+        # ==========================
+
+        "disease_weather_risk": {
+            "level": disease_weather_level,
+            "summary": disease_weather_summary
+        },
+
+        # ==========================
+        # PEST WEATHER RISK
+        # ==========================
+
+        "pest_weather_risk": {
+            "level": pest_weather_level,
+            "summary": pest_weather_summary
+        },
 
         # ==========================
         # SPRAY
