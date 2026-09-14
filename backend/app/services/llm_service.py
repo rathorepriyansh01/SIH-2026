@@ -27,14 +27,13 @@ class LLMService:
 
 
     def generate_advisory(
-        self,
-        disease: str,
-        confidence: float,
-        top_predictions: list,
-        context: dict
-    ):
+    self,
+    disease: str,
+    confidence: float,
+    top_predictions: list,
+    context: dict
+):
 
-        # Build prompt using ML prediction + context
         prompt = build_advisory_prompt(
             disease=disease,
             confidence=confidence,
@@ -42,38 +41,79 @@ class LLMService:
             context=context
         )
 
+        print("\n==============================")
+        print("LLM REQUEST")
+        print("==============================")
+        print("Disease:", disease)
+        print("Confidence:", confidence)
+        print("Top Predictions:", top_predictions)
+        print("Context:", context)
+        print("Prompt Length:", len(prompt))
 
-        response = self.client.chat.completions.create(
+        try:
 
-            model="openai/gpt-oss-120b",
+            response = self.client.chat.completions.create(
+                model="openai/gpt-oss-120b",
 
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a reliable agricultural advisory AI. "
-                        "Always return valid JSON only. "
-                        "Do not override the ML disease prediction. "
-                        "Use the provided context when generating advice."
-                    )
-                },
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an agricultural advisory AI. "
+                            "Return ONLY valid JSON. "
+                            "Do not use markdown. "
+                            "Do not use ```json. "
+                            "Do not invent pesticide dosage or weather data."
+                        )
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
 
-                {
-                    "role": "user",
-                    "content": prompt
+                temperature=0.2,
+
+                response_format={
+                    "type": "json_object"
                 }
-            ],
+            )
 
-            temperature=0.3,
+            content = response.choices[0].message.content
 
-            response_format={
-                "type": "json_object"
-            }
+            print("\n==============================")
+            print("LLM RAW RESPONSE")
+            print("==============================")
+            print(content)
+            print("==============================")
 
-        )
+            if not content:
+                raise ValueError(
+                    "LLM returned an empty response."
+                )
 
+            try:
 
-        content = response.choices[0].message.content
+                advisory = json.loads(content)
 
+            except json.JSONDecodeError as e:
 
-        return json.loads(content)
+                print("JSON ERROR:", e)
+                print("RAW RESPONSE:", content)
+
+                raise ValueError(
+                    "LLM returned invalid JSON."
+                )
+
+            return advisory
+
+        except Exception as e:
+
+            print("\n==============================")
+            print("LLM API ERROR")
+            print("==============================")
+            print(type(e).__name__)
+            print(str(e))
+            print("==============================")
+
+            raise

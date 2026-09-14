@@ -1,539 +1,493 @@
 import React from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
-
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   RefreshCw,
   AlertTriangle,
-  Image as ImageIcon,
-  CheckCircle,
+  CheckCircle2,
   Activity,
-  ShieldCheck,
+  Leaf,
+  Bug,
+  CloudRain,
+  Thermometer,
+  Droplets,
+  Wind,
+  CalendarDays,
+  MapPin,
+  ShieldAlert,
+  Sprout,
+  FlaskConical,
   Eye,
-  Sparkles,
-  Stethoscope,
+  Lightbulb,
+  Info,
 } from "lucide-react";
 
 import { SERVER_URL } from "../services/api";
-import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Result() {
-  const { t, language } = useLanguage();
-
   const location = useLocation();
   const navigate = useNavigate();
 
-  const resultData = location.state?.resultData;
-  const passedImageUrl = location.state?.imageUrl;
+  const resultData = location.state?.resultData || {};
+  const uploadedImage = location.state?.imageUrl || null;
 
-  /*
-   * Safe translation helper.
-   * Agar koi key missing ho to blank/undefined screen nahi hogi.
-   */
-  const tr = (key, fallback) => {
+  // =========================================================
+  // BACKEND RESPONSE NORMALIZATION
+  // =========================================================
+
+  const advisory =
+    resultData.advisory ||
+    resultData.llm_advisory ||
+    resultData.ai_advisory ||
+    resultData;
+
+  const prediction =
+    resultData.prediction ||
+    resultData.detection ||
+    advisory.prediction ||
+    {};
+
+  const diseaseAnalysis =
+    advisory.disease_analysis ||
+    {};
+
+  const pestAnalysis =
+    advisory.pest_analysis ||
+    [];
+
+  const chemicalRecommendations =
+    advisory.chemical_recommendations ||
+    [];
+
+  const weather =
+    advisory.weather ||
+    resultData.weather ||
+    resultData.context?.weather ||
+    {};
+
+  const monitoringPlan =
+    advisory.monitoring_plan ||
+    {};
+
+  const riskAssessment =
+    advisory.risk_assessment ||
+    {};
+
+  const actionPlan =
+    advisory.action_plan ||
+    {};
+
+  const context =
+    resultData.context ||
+    advisory.context ||
+    {};
+
+  // =========================================================
+  // BASIC VALUES
+  // =========================================================
+
+  const disease =
+    prediction.disease ||
+    prediction.name ||
+    diseaseAnalysis.name ||
+    "Unknown Disease";
+
+  const crop =
+    prediction.crop ||
+    context.farm?.crop ||
+    context.crop ||
+    "Unknown Crop";
+
+  const confidence =
+    Number(
+      prediction.confidence ??
+      resultData.confidence ??
+      0
+    );
+
+  const riskLevel =
+    prediction.risk_level ||
+    riskAssessment.level ||
+    riskAssessment.risk_level ||
+    advisory.risk_level ||
+    "Unknown";
+
+  const severity =
+    riskAssessment.severity ||
+    diseaseAnalysis.severity ||
+    advisory.severity ||
+    "Unknown";
+
+  const confidenceLevel =
+    prediction.confidence_level ||
+    (confidence >= 80
+      ? "High"
+      : confidence >= 60
+      ? "Moderate"
+      : "Low");
+
+  // =========================================================
+  // IMAGE URL
+  // =========================================================
+
+  const imagePath =
+    resultData.scan_metadata?.image_path ||
+    resultData.image_path ||
+    prediction.image_path ||
+    null;
+
+  const imageUrl =
+    uploadedImage ||
+    (
+      imagePath
+        ? imagePath.startsWith("http")
+          ? imagePath
+          : `${SERVER_URL}${imagePath}`
+        : null
+    );
+
+  // =========================================================
+  // DISEASE DETAILS
+  // =========================================================
+
+  const description =
+    diseaseAnalysis.description ||
+    advisory.description ||
+    "No disease description available.";
+
+  const symptoms =
+    diseaseAnalysis.symptoms ||
+    advisory.symptoms ||
+    [];
+
+  const possibleCauses =
+    diseaseAnalysis.possible_causes ||
+    diseaseAnalysis.possibleCauses ||
+    advisory.possible_causes ||
+    [];
+
+  const development =
+    diseaseAnalysis.development ||
+    "";
+
+  const spread =
+    diseaseAnalysis.spread ||
+    "";
+
+  const favorableConditions =
+    diseaseAnalysis.favorable_conditions ||
+    diseaseAnalysis.favorableConditions ||
+    [];
+
+  // =========================================================
+  // WEATHER
+  // =========================================================
+
+  const currentWeather =
+    weather.current ||
+    weather.current_weather ||
+    {};
+
+  const previous5Days =
+    weather.previous_5_days ||
+    [];
+
+  const next5Days =
+    weather.next_5_days ||
+    [];
+
+  const rainPrediction =
+    weather.rain_prediction ||
+    {};
+
+  const diseaseWeatherRisk =
+    weather.disease_weather_risk ||
+    {};
+
+  const sprayingAdvice =
+    weather.spraying_advice ||
+    [];
+
+  // =========================================================
+  // FARM INFORMATION
+  // =========================================================
+
+  const farm =
+    context.farm ||
+    resultData.farm ||
+    {};
+
+  const locationData =
+    context.location ||
+    resultData.location ||
+    {};
+
+  // =========================================================
+  // HELPERS
+  // =========================================================
+
+  const formatValue = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return "Not available";
+    }
+
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
+
+    if (typeof value === "object") {
+      return JSON.stringify(value);
+    }
+
+    return String(value);
+  };
+
+  const getRiskClass = (risk) => {
+    const value = String(risk).toLowerCase();
+
+    if (
+      value.includes("high") ||
+      value.includes("critical") ||
+      value.includes("severe")
+    ) {
+      return "text-rose-400 bg-rose-500/10 border-rose-500/30";
+    }
+
+    if (
+      value.includes("moderate") ||
+      value.includes("medium")
+    ) {
+      return "text-amber-400 bg-amber-500/10 border-amber-500/30";
+    }
+
+    if (
+      value.includes("low") ||
+      value.includes("none")
+    ) {
+      return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+    }
+
+    return "text-slate-300 bg-slate-800 border-slate-700";
+  };
+
+  const getDayName = (date) => {
+    if (!date) return "";
+
     try {
-      const value = key
-        .split(".")
-        .reduce((obj, part) => obj?.[part], t);
-
-      return value || fallback;
+      return new Date(date).toLocaleDateString(
+        "en-IN",
+        {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        }
+      );
     } catch {
-      return fallback;
+      return date;
     }
   };
 
-  // =====================================================
-  // NO RESULT
-  // =====================================================
-
-  if (!resultData) {
-    return (
-      <div className="max-w-md mx-auto my-16 text-center glass-panel p-8 rounded-3xl border border-slate-800 space-y-4">
-
-        <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto" />
-
-        <h2 className="text-xl font-bold text-white">
-          {tr(
-            "result.noResult",
-            "No Result Data Available"
-          )}
-        </h2>
-
-        <p className="text-sm text-slate-400">
-          {language === "hi"
-            ? "कृपया पहले स्कैन पेज से एक इमेज अपलोड करें।"
-            : "Please upload an image from the Scan page first."}
+  const renderList = (items, emptyText = "No information available.") => {
+    if (!Array.isArray(items) || items.length === 0) {
+      return (
+        <p className="text-sm text-slate-500">
+          {emptyText}
         </p>
+      );
+    }
 
-        <Link
-          to="/scan"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-agri-500 text-slate-950 font-bold text-sm"
-        >
-          {language === "hi"
-            ? "स्कैन पेज पर जाएँ"
-            : "Go to Scan Page"}
-        </Link>
+    return (
+      <ul className="space-y-2">
+        {items.map((item, index) => (
+          <li
+            key={index}
+            className="flex items-start gap-3 text-sm text-slate-300"
+          >
+            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-agri-400 shrink-0" />
+            <span>
+              {typeof item === "object"
+                ? formatValue(item)
+                : item}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
+  // =========================================================
+  // NO RESULT
+  // =========================================================
+
+  if (!location.state?.resultData) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <div className="glass-panel rounded-3xl border border-slate-800 p-10">
+          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+
+          <h2 className="text-2xl font-bold text-white mb-2">
+            No Scan Result Available
+          </h2>
+
+          <p className="text-slate-400 mb-6">
+            Please perform a new crop scan to view the AI
+            analysis.
+          </p>
+
+          <button
+            onClick={() => navigate("/scan")}
+            className="px-6 py-3 rounded-xl bg-agri-500 text-slate-950 font-bold"
+          >
+            Scan Another Crop
+          </button>
+        </div>
       </div>
     );
   }
 
-  // =====================================================
-  // SUPPORT BOTH API RESPONSE FORMATS
-  // =====================================================
-
-  const detection = resultData.detection || {};
-  const prediction = resultData.prediction || {};
-
-  const advisory = resultData.advisory || {};
-
-  // =====================================================
-  // DISEASE
-  // =====================================================
-
-  const disease =
-    detection.disease ||
-    prediction.disease ||
-    "Unknown Disease";
-
-  // =====================================================
-  // CONFIDENCE
-  // =====================================================
-
-  const confidence = Number(
-    detection.confidence ??
-      prediction.confidence ??
-      0
-  );
-
-  // =====================================================
-  // TOP PREDICTIONS
-  // =====================================================
-
-  const topPredictions =
-    detection.top_predictions || [];
-
-  // =====================================================
-  // RISK
-  // =====================================================
-
-  const riskLevel =
-    advisory.risk_level ||
-    prediction.risk_level ||
-    "Unknown";
-
-  // =====================================================
-  // SEVERITY
-  // =====================================================
-
-  const severity =
-    advisory.severity ||
-    prediction.severity ||
-    "Unknown";
-
-  // =====================================================
-  // SUMMARY
-  // =====================================================
-
-  const summary =
-    advisory.summary ||
-    resultData.disease_information?.description ||
-    (language === "hi"
-      ? "AI सलाह वर्तमान में उपलब्ध नहीं है।"
-      : "AI advisory information is currently unavailable.");
-
-  // =====================================================
-  // IMMEDIATE ACTIONS
-  // =====================================================
-
-  const immediateActions =
-    Array.isArray(advisory.immediate_actions)
-      ? advisory.immediate_actions
-      : Array.isArray(
-          resultData.recommended_actions
-            ?.immediate_actions
-        )
-      ? resultData.recommended_actions
-          .immediate_actions
-      : [];
-
-  // =====================================================
-  // PREVENTION
-  // =====================================================
-
-  const preventionTips =
-    Array.isArray(advisory.prevention_tips)
-      ? advisory.prevention_tips
-      : Array.isArray(
-          resultData.recommended_actions
-            ?.prevention
-        )
-      ? resultData.recommended_actions.prevention
-      : [];
-
-  // =====================================================
-  // MONITORING
-  // =====================================================
-
-  const monitoringAdvice =
-    advisory.monitoring_advice ||
-    (language === "hi"
-      ? "फसल की नियमित रूप से निगरानी करते रहें।"
-      : "Continue monitoring the crop regularly.");
-
-  // =====================================================
-  // EXPERT CONSULTATION
-  // =====================================================
-
-  const expertConsultationRequired =
-    advisory.expert_consultation_required === true;
-
-  // =====================================================
-  // CONFIDENCE NOTE
-  // =====================================================
-
-  const confidenceNote =
-    advisory.confidence_note ||
-    (language === "hi"
-      ? `ML मॉडल की भविष्यवाणी की विश्वसनीयता ${confidence.toFixed(
-          2
-        )}% है।`
-      : `The ML model prediction confidence is ${confidence.toFixed(
-          2
-        )}%.`);
-
-  // =====================================================
-  // CONTEXT
-  // =====================================================
-
-  const context =
-    resultData.context || {};
-
-  const weather =
-    context.weather || {};
-
-  const farmLocation =
-    context.location || {};
-
-  const farm =
-    context.farm || {};
-
-  // =====================================================
-  // HISTORY METADATA
-  // =====================================================
-
-  const historyMetadata =
-    resultData.scan_metadata || {};
-
-  // =====================================================
-  // IMAGE URL
-  // =====================================================
-
-  const historyImagePath =
-    historyMetadata.image_path;
-
-  let imageUrl =
-    passedImageUrl || null;
-
-  if (!imageUrl && historyImagePath) {
-    imageUrl =
-      historyImagePath.startsWith("http")
-        ? historyImagePath
-        : `${SERVER_URL}${historyImagePath}`;
-  }
-
-  // =====================================================
-  // CLEAN DISEASE NAME
-  // =====================================================
-
-  const cleanDiseaseName = (name) => {
-    if (!name) {
-      return "Unknown Disease";
-    }
-
-    return String(name)
-      .replace("Tomato___", "")
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (char) =>
-        char.toUpperCase()
-      );
-  };
-
-  const diseaseName =
-    cleanDiseaseName(disease);
-
-  // =====================================================
-  // HINDI DISEASE NAME
-  // =====================================================
-
-  const getDiseaseName = () => {
-    if (language !== "hi") {
-      return diseaseName;
-    }
-
-    const diseaseLower =
-      diseaseName.toLowerCase();
-
-    const diseaseMap = {
-      healthy: "स्वस्थ",
-      "early blight": "अगेती झुलसा",
-      "late blight": "पछेती झुलसा",
-      "leaf mold": "पत्ती फफूंदी",
-      "septoria leaf spot":
-        "सेप्टोरिया पत्ती धब्बा",
-    };
-
-    return (
-      diseaseMap[diseaseLower] ||
-      diseaseName
-    );
-  };
-
-  const displayDiseaseName =
-    getDiseaseName();
-
-  // =====================================================
-  // CONFIDENCE STATUS
-  // =====================================================
-
-  let confidenceStatus = "Low";
-
-  if (confidence >= 80) {
-    confidenceStatus = "High";
-  } else if (confidence >= 60) {
-    confidenceStatus = "Medium";
-  }
-
-  const confidenceStatusText =
-    language === "hi"
-      ? confidenceStatus === "High"
-        ? "उच्च"
-        : confidenceStatus === "Medium"
-        ? "मध्यम"
-        : "कम"
-      : confidenceStatus;
-
-  // =====================================================
-  // RISK DISPLAY
-  // =====================================================
-
-  const getRiskText = () => {
-    if (language !== "hi") {
-      return riskLevel;
-    }
-
-    const value =
-      String(riskLevel).toLowerCase();
-
-    if (value === "high") return "उच्च";
-    if (value === "medium") return "मध्यम";
-    if (value === "moderate") return "मध्यम";
-    if (value === "low") return "कम";
-    if (value === "none") return "कोई जोखिम नहीं";
-
-    return riskLevel;
-  };
-
-  const displayRisk =
-    getRiskText();
-
-  // =====================================================
-  // SEVERITY DISPLAY
-  // =====================================================
-
-  const getSeverityText = () => {
-    if (language !== "hi") {
-      return severity;
-    }
-
-    const value =
-      String(severity).toLowerCase();
-
-    if (value === "high") return "उच्च";
-    if (value === "medium") return "मध्यम";
-    if (value === "moderate") return "मध्यम";
-    if (value === "low") return "कम";
-    if (value === "unknown") return "अज्ञात";
-
-    return severity;
-  };
-
-  const displaySeverity =
-    getSeverityText();
-
-  // =====================================================
-  // RENDER
-  // =====================================================
+  // =========================================================
+  // UI
+  // =========================================================
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
-      {/* =================================================
-          HEADER
-      ================================================= */}
+      {/* =====================================================
+          TOP BAR
+      ===================================================== */}
 
       <div className="flex items-center justify-between">
 
         <button
-          onClick={() => navigate("/scan")}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+          onClick={() => navigate("/history")}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-agri-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-
-          {language === "hi"
-            ? "दूसरी फसल स्कैन करें"
-            : "Scan Another Leaf"}
+          Back to History
         </button>
 
-        <Link
-          to="/scan"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-agri-400 hover:bg-slate-800"
+        <button
+          onClick={() => navigate("/scan")}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-bold text-agri-400 hover:border-agri-500/40"
         >
           <RefreshCw className="w-4 h-4" />
-
-          {language === "hi"
-            ? "नया स्कैन"
-            : "New Scan"}
-        </Link>
+          New Scan
+        </button>
 
       </div>
 
-      {/* =================================================
-          CONFIDENCE WARNING
-      ================================================= */}
 
-      {confidence < 70 && (
+      {/* =====================================================
+          LOW CONFIDENCE WARNING
+      ===================================================== */}
 
-        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-4">
+      {confidence < 60 && (
+        <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-5 flex items-start gap-4">
 
           <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0" />
 
           <div>
-
-            <h4 className="text-sm font-bold text-amber-300">
-              {language === "hi"
-                ? "सत्यापन की सलाह"
-                : "Verification Recommended"}
-            </h4>
+            <h3 className="font-bold text-amber-300">
+              Verification Recommended
+            </h3>
 
             <p className="text-sm text-amber-200/80 mt-1">
-
-              {language === "hi"
-                ? `मॉडल की विश्वसनीयता ${confidence.toFixed(
-                    2
-                  )}% है। कोई बड़ा उपचार निर्णय लेने से पहले लक्षणों की पुष्टि कृषि विशेषज्ञ से करें या अधिक स्पष्ट पत्ती की इमेज अपलोड करें।`
-                : `The model confidence is ${confidence.toFixed(
-                    2
-                  )}%. Please verify the symptoms with an agricultural expert or upload a clearer leaf image before taking major treatment decisions.`}
-
+              The model confidence is{" "}
+              {confidence.toFixed(2)}%.
+              Please verify the symptoms with an
+              agricultural expert or upload a clearer
+              leaf image before taking major treatment
+              decisions.
             </p>
-
           </div>
 
         </div>
-
       )}
 
-      {/* =================================================
-          MAIN RESULT
-      ================================================= */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* =====================================================
+          MAIN RESULT
+      ===================================================== */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
 
         {/* IMAGE */}
 
-        <div className="glass-panel p-4 rounded-3xl border border-slate-800">
+        <div className="glass-panel rounded-3xl border border-slate-800 p-5">
 
-          <div className="rounded-2xl overflow-hidden bg-slate-950 aspect-square flex items-center justify-center border border-slate-800">
+          <div className="relative rounded-2xl overflow-hidden bg-slate-950 aspect-square border border-slate-800">
 
             {imageUrl ? (
-
               <img
                 src={imageUrl}
-                alt={
-                  language === "hi"
-                    ? "स्कैन की गई टमाटर की पत्ती"
-                    : "Scanned tomato leaf"
-                }
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display =
-                    "none";
-                }}
+                alt={disease}
+                className="w-full h-full object-contain"
               />
-
             ) : (
-
-              <ImageIcon className="w-16 h-16 text-slate-700" />
-
+              <div className="w-full h-full flex items-center justify-center">
+                <Leaf className="w-16 h-16 text-slate-700" />
+              </div>
             )}
 
           </div>
 
-          <p className="text-xs text-slate-400 mt-4">
-            {language === "hi"
-              ? "AI फसल रोग विश्लेषण"
-              : "AI Crop Disease Analysis"}
+          <p className="text-xs text-slate-500 mt-4">
+            AI Crop Disease Analysis
           </p>
 
         </div>
 
+
         {/* PREDICTION */}
 
-        <div className="md:col-span-2 glass-panel p-8 rounded-3xl border border-slate-800">
+        <div className="glass-panel rounded-3xl border border-slate-800 p-7">
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-4 mb-6">
 
-            <div className="p-3 rounded-xl bg-agri-500/10">
-
-              <Activity className="w-6 h-6 text-agri-400" />
-
+            <div className="w-12 h-12 rounded-xl bg-agri-500/10 flex items-center justify-center">
+              <Activity className="w-7 h-7 text-agri-400" />
             </div>
 
             <div>
-
-              <p className="text-sm text-slate-400">
-                {language === "hi"
-                  ? "AI द्वारा पहचान"
-                  : "AI DETECTED"}
+              <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">
+                AI Detected
               </p>
 
-              <h1 className="text-3xl font-bold text-white">
-                {displayDiseaseName}
+              <h1 className="text-3xl font-extrabold text-white">
+                {disease}
               </h1>
-
             </div>
 
           </div>
 
+
           {/* CONFIDENCE */}
 
-          <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
+          <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-5 mb-5">
 
             <div className="flex justify-between mb-3">
 
-              <span className="text-slate-400">
-                {language === "hi"
-                  ? "भविष्यवाणी की विश्वसनीयता"
-                  : "Prediction Confidence"}
+              <span className="text-sm text-slate-400">
+                Prediction Confidence
               </span>
 
-              <span className="text-agri-400 font-bold">
+              <span className="text-lg font-extrabold text-agri-400">
                 {confidence.toFixed(2)}%
               </span>
 
             </div>
 
-            <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+            <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
 
               <div
-                className="bg-agri-500 h-full rounded-full transition-all duration-700"
+                className="h-full bg-agri-500 rounded-full transition-all"
                 style={{
                   width: `${Math.min(
-                    Math.max(
-                      confidence,
-                      0
-                    ),
+                    Math.max(confidence, 0),
                     100
                   )}%`,
                 }}
@@ -542,49 +496,55 @@ export default function Result() {
             </div>
 
             <p className="text-xs text-slate-500 mt-3">
-
-              {language === "hi"
-                ? "विश्वसनीयता स्तर:"
-                : "Confidence Level:"}
-
-              {" "}
-
-              <span className="text-slate-300 font-semibold">
-                {confidenceStatusText}
+              Confidence Level:{" "}
+              <span className="text-slate-300 font-bold">
+                {confidenceLevel}
               </span>
-
             </p>
 
           </div>
+
 
           {/* RISK + SEVERITY */}
 
-          <div className="grid grid-cols-2 gap-4 mt-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-            <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-800">
+            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
 
-              <p className="text-xs text-slate-500 uppercase">
-                {language === "hi"
-                  ? "जोखिम स्तर"
-                  : "Risk Level"}
-              </p>
-
-              <p className="text-lg font-bold text-amber-400 mt-1">
-                {displayRisk}
-              </p>
-
-            </div>
-
-            <div className="bg-slate-900/60 rounded-2xl p-4 border border-slate-800">
-
-              <p className="text-xs text-slate-500 uppercase">
-                {language === "hi"
-                  ? "गंभीरता"
-                  : "Severity"}
+              <p className="text-[11px] uppercase text-slate-500 font-bold">
+                Crop
               </p>
 
               <p className="text-lg font-bold text-white mt-1">
-                {displaySeverity}
+                {crop}
+              </p>
+
+            </div>
+
+            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+
+              <p className="text-[11px] uppercase text-slate-500 font-bold">
+                Risk Level
+              </p>
+
+              <span
+                className={`inline-flex mt-2 px-3 py-1 rounded-lg border text-sm font-bold ${getRiskClass(
+                  riskLevel
+                )}`}
+              >
+                {riskLevel}
+              </span>
+
+            </div>
+
+            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+
+              <p className="text-[11px] uppercase text-slate-500 font-bold">
+                Severity
+              </p>
+
+              <p className="text-lg font-bold text-white mt-1">
+                {severity}
               </p>
 
             </div>
@@ -595,538 +555,918 @@ export default function Result() {
 
       </div>
 
-      {/* =================================================
-          ENVIRONMENT & FARM CONTEXT
-      ================================================= */}
 
-      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+      {/* =====================================================
+          DISEASE INFORMATION
+      ===================================================== */}
 
-        <div className="flex items-center gap-3 mb-6">
+      <section className="glass-panel rounded-3xl border border-slate-800 p-6">
 
-          <div className="p-3 rounded-xl bg-blue-500/10">
+        <SectionTitle
+          icon={<Leaf className="w-6 h-6 text-agri-400" />}
+          title="Disease Information"
+        />
 
-            <Activity className="w-6 h-6 text-blue-400" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <InfoBlock
+            title="Description"
+            icon={<Info className="w-4 h-4" />}
+          >
+            <p className="text-sm leading-7 text-slate-300">
+              {description}
+            </p>
+          </InfoBlock>
+
+
+          <InfoBlock
+            title="Symptoms"
+            icon={<Activity className="w-4 h-4" />}
+          >
+            {renderList(symptoms)}
+          </InfoBlock>
+
+
+          <InfoBlock
+            title="Possible Causes"
+            icon={<Lightbulb className="w-4 h-4" />}
+          >
+            {renderList(possibleCauses)}
+          </InfoBlock>
+
+
+          <InfoBlock
+            title="Development"
+            icon={<Sprout className="w-4 h-4" />}
+          >
+            <p className="text-sm leading-7 text-slate-300">
+              {development || "No development information available."}
+            </p>
+          </InfoBlock>
+
+
+          <InfoBlock
+            title="Spread"
+            icon={<Activity className="w-4 h-4" />}
+          >
+            <p className="text-sm leading-7 text-slate-300">
+              {spread || "No spread information available."}
+            </p>
+          </InfoBlock>
+
+
+          <InfoBlock
+            title="Favorable Conditions"
+            icon={<CloudRain className="w-4 h-4" />}
+          >
+            {renderList(favorableConditions)}
+          </InfoBlock>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          PEST ANALYSIS
+      ===================================================== */}
+
+      <section className="glass-panel rounded-3xl border border-slate-800 p-6">
+
+        <SectionTitle
+          icon={<Bug className="w-6 h-6 text-amber-400" />}
+          title="Pest Analysis"
+        />
+
+        {pestAnalysis.length === 0 ? (
+
+          <div className="text-sm text-slate-500">
+            No pest information available for this scan.
+          </div>
+
+        ) : (
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            {pestAnalysis.map((pest, index) => (
+
+              <div
+                key={index}
+                className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5"
+              >
+
+                <h3 className="text-lg font-bold text-white mb-3">
+                  {pest.name ||
+                    pest.pest ||
+                    pest.common_name ||
+                    `Pest ${index + 1}`}
+                </h3>
+
+                {pest.description && (
+                  <p className="text-sm text-slate-400 leading-6 mb-4">
+                    {pest.description}
+                  </p>
+                )}
+
+                {pest.damage && (
+                  <div className="mb-3">
+                    <p className="text-xs text-slate-500 uppercase font-bold">
+                      Damage
+                    </p>
+                    <p className="text-sm text-slate-300 mt-1">
+                      {pest.damage}
+                    </p>
+                  </div>
+                )}
+
+                {pest.signs && (
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-bold">
+                      Signs
+                    </p>
+                    <p className="text-sm text-slate-300 mt-1">
+                      {pest.signs}
+                    </p>
+                  </div>
+                )}
+
+              </div>
+
+            ))}
 
           </div>
 
-          <div>
+        )}
 
-            <h2 className="text-xl font-bold text-white">
-              {language === "hi"
-                ? "खेत और पर्यावरण की जानकारी"
-                : "Farm & Environmental Context"}
-            </h2>
+      </section>
 
-            <p className="text-xs text-slate-500">
-              {language === "hi"
-                ? "AI सलाह के लिए उपयोग की गई जानकारी"
-                : "Information used for AI advisory"}
+
+      {/* =====================================================
+          CHEMICAL RECOMMENDATIONS
+      ===================================================== */}
+
+      <section className="glass-panel rounded-3xl border border-slate-800 p-6">
+
+        <SectionTitle
+          icon={<FlaskConical className="w-6 h-6 text-blue-400" />}
+          title="Chemical & Pest Management"
+        />
+
+        {chemicalRecommendations.length === 0 ? (
+
+          <p className="text-sm text-slate-500">
+            No chemical recommendation available.
+          </p>
+
+        ) : (
+
+          <div className="space-y-4">
+
+            {chemicalRecommendations.map(
+              (item, index) => (
+
+                <div
+                  key={index}
+                  className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5"
+                >
+
+                  <div className="flex items-start justify-between gap-4">
+
+                    <div>
+
+                      <h3 className="text-lg font-bold text-white">
+                        {item.product ||
+                          item.name ||
+                          item.medicine ||
+                          `Recommendation ${index + 1}`}
+                      </h3>
+
+                      {item.target && (
+                        <p className="text-xs text-agri-400 mt-1">
+                          Target: {item.target}
+                        </p>
+                      )}
+
+                    </div>
+
+                    {item.dosage && (
+                      <span className="px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-bold">
+                        {item.dosage}
+                      </span>
+                    )}
+
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
+
+                    {item.application && (
+                      <SmallDetail
+                        label="Application"
+                        value={item.application}
+                      />
+                    )}
+
+                    {item.timing && (
+                      <SmallDetail
+                        label="Timing"
+                        value={item.timing}
+                      />
+                    )}
+
+                    {item.frequency && (
+                      <SmallDetail
+                        label="Frequency"
+                        value={item.frequency}
+                      />
+                    )}
+
+                  </div>
+
+                  {item.notes && (
+                    <p className="text-xs text-slate-500 mt-4">
+                      {item.notes}
+                    </p>
+                  )}
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+        )}
+
+        <div className="mt-5 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+
+          <p className="text-xs text-amber-200/80 leading-6">
+            <strong className="text-amber-300">
+              Safety note:
+            </strong>{" "}
+            Chemical recommendations are AI-generated
+            guidance. Always follow the registered product
+            label, local agricultural regulations and
+            advice from a qualified agricultural expert
+            before application.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          WEATHER
+      ===================================================== */}
+
+      <section className="glass-panel rounded-3xl border border-slate-800 p-6">
+
+        <SectionTitle
+          icon={<CloudRain className="w-6 h-6 text-blue-400" />}
+          title="Weather & Environmental Intelligence"
+        />
+
+        {/* CURRENT WEATHER */}
+
+        <div className="mb-8">
+
+          <h3 className="text-lg font-bold text-white mb-4">
+            Current Weather
+          </h3>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+            <WeatherCard
+              icon={<Thermometer />}
+              label="Temperature"
+              value={
+                currentWeather.temperature_c !== undefined
+                  ? `${currentWeather.temperature_c}°C`
+                  : "N/A"
+              }
+            />
+
+            <WeatherCard
+              icon={<Droplets />}
+              label="Humidity"
+              value={
+                currentWeather.humidity_percent !== undefined
+                  ? `${currentWeather.humidity_percent}%`
+                  : "N/A"
+              }
+            />
+
+            <WeatherCard
+              icon={<CloudRain />}
+              label="Rain"
+              value={
+                currentWeather.rain_mm !== undefined
+                  ? `${currentWeather.rain_mm} mm`
+                  : "N/A"
+              }
+            />
+
+            <WeatherCard
+              icon={<Wind />}
+              label="Wind"
+              value={
+                currentWeather.wind_speed_kmh !== undefined
+                  ? `${currentWeather.wind_speed_kmh} km/h`
+                  : "N/A"
+              }
+            />
+
+          </div>
+
+        </div>
+
+
+        {/* RAIN PREDICTION */}
+
+        <div className="rounded-2xl bg-blue-500/10 border border-blue-500/20 p-5 mb-8">
+
+          <div className="flex items-center gap-3 mb-3">
+
+            <CloudRain className="w-5 h-5 text-blue-400" />
+
+            <h3 className="font-bold text-white">
+              Rain Prediction
+            </h3>
+
+          </div>
+
+          <p className="text-sm text-slate-300 leading-6">
+
+            {typeof rainPrediction === "string"
+              ? rainPrediction
+              : rainPrediction.summary ||
+                rainPrediction.message ||
+                (
+                  rainPrediction.rain_expected !== undefined
+                    ? rainPrediction.rain_expected
+                      ? "Rain is expected during the forecast period."
+                      : "No significant rain is currently expected during the forecast period."
+                    : "Rain prediction information is not available."
+                )}
+
+          </p>
+
+        </div>
+
+
+        {/* PREVIOUS 5 DAYS */}
+
+        <WeatherTimeline
+          title="Previous 5 Days"
+          data={previous5Days}
+          historical
+        />
+
+
+        {/* NEXT 5 DAYS */}
+
+        <WeatherTimeline
+          title="Next 5 Days Forecast"
+          data={next5Days}
+        />
+
+
+        {/* WEATHER RISK */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
+
+          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5">
+
+            <div className="flex items-center gap-3 mb-3">
+
+              <ShieldAlert className="w-5 h-5 text-amber-400" />
+
+              <h3 className="font-bold text-white">
+                Disease Weather Risk
+              </h3>
+
+            </div>
+
+            <p className="text-sm text-slate-300 leading-6">
+
+              {typeof diseaseWeatherRisk === "string"
+                ? diseaseWeatherRisk
+                : diseaseWeatherRisk.summary ||
+                  diseaseWeatherRisk.level ||
+                  diseaseWeatherRisk.risk ||
+                  "No weather-related disease risk information available."}
+
             </p>
 
           </div>
 
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5">
 
-          {/* WEATHER */}
+            <div className="flex items-center gap-3 mb-3">
 
-          <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
+              <FlaskConical className="w-5 h-5 text-agri-400" />
 
-            <h3 className="font-bold text-white mb-4">
-              🌦️{" "}
-              {language === "hi"
-                ? "वर्तमान मौसम"
-                : "Current Weather"}
-            </h3>
-
-            <div className="space-y-3 text-sm">
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "तापमान:"
-                  : "Temperature:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {weather.temperature_c ?? "N/A"} °C
-                </span>
-              </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "नमी:"
-                  : "Humidity:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {weather.humidity_percent ?? "N/A"}%
-                </span>
-              </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "वर्षा:"
-                  : "Rain:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {weather.rain_mm ?? "N/A"} mm
-                </span>
-              </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "हवा की गति:"
-                  : "Wind Speed:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {weather.wind_speed_kmh ?? "N/A"} km/h
-                </span>
-              </p>
+              <h3 className="font-bold text-white">
+                Spraying Advice
+              </h3>
 
             </div>
 
-          </div>
-
-          {/* LOCATION */}
-
-          <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
-
-            <h3 className="font-bold text-white mb-4">
-              📍{" "}
-              {language === "hi"
-                ? "खेत का स्थान"
-                : "Farm Location"}
-            </h3>
-
-            <div className="space-y-3 text-sm">
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "अक्षांश:"
-                  : "Latitude:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {farmLocation.latitude ?? "N/A"}
-                </span>
+            {Array.isArray(sprayingAdvice) ? (
+              renderList(
+                sprayingAdvice.map((item) =>
+                  typeof item === "string"
+                    ? item
+                    : `${item.date || ""}: ${
+                        item.reason ||
+                        item.advice ||
+                        (item.suitable
+                          ? "Suitable conditions"
+                          : "Avoid spraying")
+                      }`
+                )
+              )
+            ) : (
+              <p className="text-sm text-slate-300">
+                {formatValue(sprayingAdvice)}
               </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "देशांतर:"
-                  : "Longitude:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {farmLocation.longitude ?? "N/A"}
-                </span>
-              </p>
-
-              {farmLocation.city && (
-
-                <p className="text-slate-400">
-
-                  {language === "hi"
-                    ? "शहर:"
-                    : "City:"}
-
-                  <span className="text-white font-semibold ml-2">
-                    {farmLocation.city}
-                  </span>
-
-                </p>
-
-              )}
-
-              {farmLocation.district && (
-
-                <p className="text-slate-400">
-
-                  {language === "hi"
-                    ? "जिला:"
-                    : "District:"}
-
-                  <span className="text-white font-semibold ml-2">
-                    {farmLocation.district}
-                  </span>
-
-                </p>
-
-              )}
-
-              {farmLocation.state && (
-
-                <p className="text-slate-400">
-
-                  {language === "hi"
-                    ? "राज्य:"
-                    : "State:"}
-
-                  <span className="text-white font-semibold ml-2">
-                    {farmLocation.state}
-                  </span>
-
-                </p>
-
-              )}
-
-            </div>
-
-          </div>
-
-          {/* FARM */}
-
-          <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
-
-            <h3 className="font-bold text-white mb-4">
-              🌱{" "}
-              {language === "hi"
-                ? "खेत की जानकारी"
-                : "Farm Information"}
-            </h3>
-
-            <div className="space-y-3 text-sm">
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "क्षेत्रफल:"
-                  : "Area:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {farm.area_acres ?? "N/A"}{" "}
-                  {language === "hi"
-                    ? "एकड़"
-                    : "acres"}
-                </span>
-              </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "फसल की आयु:"
-                  : "Crop Age:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {farm.crop_age_days ?? "N/A"}{" "}
-                  {language === "hi"
-                    ? "दिन"
-                    : "days"}
-                </span>
-              </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "विकास अवस्था:"
-                  : "Growth Stage:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {farm.growth_stage ?? "N/A"}
-                </span>
-              </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "सिंचाई:"
-                  : "Irrigation:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {farm.irrigation_method ?? "N/A"}
-                </span>
-              </p>
-
-              <p className="text-slate-400">
-                {language === "hi"
-                  ? "पिछला रोग:"
-                  : "Previous Disease:"}
-
-                <span className="text-white font-semibold ml-2">
-                  {farm.previous_disease
-                    ? language === "hi"
-                      ? "हाँ"
-                      : "Yes"
-                    : language === "hi"
-                    ? "नहीं"
-                    : "No"}
-                </span>
-              </p>
-
-            </div>
+            )}
 
           </div>
 
         </div>
 
-      </div>
+      </section>
 
-      {/* =================================================
-          AI SUMMARY
-      ================================================= */}
 
-      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+      {/* =====================================================
+          MONITORING PLAN
+      ===================================================== */}
 
-        <div className="flex items-center gap-3 mb-5">
+      <section className="glass-panel rounded-3xl border border-slate-800 p-6">
 
-          <div className="p-3 rounded-xl bg-purple-500/10">
+        <SectionTitle
+          icon={<Eye className="w-6 h-6 text-purple-400" />}
+          title="Smart Monitoring Plan"
+        />
 
-            <Sparkles className="w-6 h-6 text-purple-400" />
+        {typeof monitoringPlan === "string" ? (
+
+          <p className="text-sm text-slate-300 leading-7">
+            {monitoringPlan}
+          </p>
+
+        ) : (
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <ObjectInfo
+              title="Monitoring Frequency"
+              value={
+                monitoringPlan.frequency ||
+                monitoringPlan.monitoring_frequency
+              }
+            />
+
+            <ObjectInfo
+              title="What To Monitor"
+              value={
+                monitoringPlan.what_to_monitor ||
+                monitoringPlan.parameters
+              }
+            />
+
+            <ObjectInfo
+              title="Early Warning Signs"
+              value={
+                monitoringPlan.early_warning_signs ||
+                monitoringPlan.warning_signs
+              }
+            />
+
+            <ObjectInfo
+              title="Next Recommended Check"
+              value={
+                monitoringPlan.next_check ||
+                monitoringPlan.next_monitoring
+              }
+            />
 
           </div>
 
-          <div>
+        )}
 
-            <h2 className="text-xl font-bold text-white">
-              {language === "hi"
-                ? "AI सलाह"
-                : "AI Advisory"}
-            </h2>
+      </section>
 
-            <p className="text-xs text-slate-500">
-              {language === "hi"
-                ? "ML भविष्यवाणी और AI विश्लेषण से तैयार"
-                : "Generated using ML prediction + AI reasoning"}
-            </p>
+
+      {/* =====================================================
+          RISK ASSESSMENT
+      ===================================================== */}
+
+      <section className="glass-panel rounded-3xl border border-slate-800 p-6">
+
+        <SectionTitle
+          icon={<ShieldAlert className="w-6 h-6 text-rose-400" />}
+          title="Risk Assessment"
+        />
+
+        {typeof riskAssessment === "string" ? (
+
+          <p className="text-sm text-slate-300 leading-7">
+            {riskAssessment}
+          </p>
+
+        ) : (
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <ObjectInfo
+              title="Overall Risk"
+              value={
+                riskAssessment.level ||
+                riskAssessment.risk_level
+              }
+            />
+
+            <ObjectInfo
+              title="Severity"
+              value={riskAssessment.severity}
+            />
+
+            <ObjectInfo
+              title="Spread Risk"
+              value={
+                riskAssessment.spread_risk
+              }
+            />
+
+            <ObjectInfo
+              title="Reason"
+              value={
+                riskAssessment.reason ||
+                riskAssessment.explanation
+              }
+            />
 
           </div>
 
-        </div>
+        )}
 
-        <div className="bg-slate-900/60 rounded-2xl p-5 border border-slate-800">
+      </section>
 
-          <p className="text-sm leading-7 text-slate-300">
-            {summary}
+
+      {/* =====================================================
+          ACTION PLAN
+      ===================================================== */}
+
+      <section className="glass-panel rounded-3xl border border-slate-800 p-6">
+
+        <SectionTitle
+          icon={<CheckCircle2 className="w-6 h-6 text-emerald-400" />}
+          title="Recommended Action Plan"
+        />
+
+        {typeof actionPlan === "string" ? (
+
+          <p className="text-sm text-slate-300 leading-7">
+            {actionPlan}
+          </p>
+
+        ) : (
+
+          <div className="space-y-5">
+
+            <ActionBlock
+              title="Immediate Actions"
+              value={
+                actionPlan.immediate_actions ||
+                actionPlan.immediate ||
+                []
+              }
+            />
+
+            <ActionBlock
+              title="Prevention"
+              value={
+                actionPlan.prevention ||
+                actionPlan.prevention_tips ||
+                []
+              }
+            />
+
+            <ActionBlock
+              title="Long-Term Management"
+              value={
+                actionPlan.long_term_management ||
+                actionPlan.management ||
+                []
+              }
+            />
+
+          </div>
+
+        )}
+
+      </section>
+
+
+      {/* =====================================================
+          FOOTER INFO
+      ===================================================== */}
+
+      <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-5">
+
+        <div className="flex items-start gap-3">
+
+          <Info className="w-5 h-5 text-agri-400 shrink-0 mt-0.5" />
+
+          <p className="text-xs text-slate-500 leading-6">
+
+            This report combines the crop disease model,
+            farm context, environmental conditions and AI
+            advisory. AI output should support — not replace
+            — professional agricultural judgement.
+
           </p>
 
         </div>
 
       </div>
 
-      {/* =================================================
-          ACTION PLAN
-      ================================================= */}
 
-      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+      {/* =====================================================
+          BUTTONS
+      ===================================================== */}
 
-        <h2 className="text-2xl font-bold text-white mb-6">
-          {language === "hi"
-            ? "फसल कार्य योजना"
-            : "Crop Action Plan"}
-        </h2>
+      <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2 pb-8">
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <button
+          onClick={() => navigate("/history")}
+          className="px-6 py-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 font-bold hover:border-agri-500/40"
+        >
+          Back to History
+        </button>
 
-          {/* IMMEDIATE ACTIONS */}
-
-          <div>
-
-            <div className="flex items-center gap-2 mb-4">
-
-              <CheckCircle className="w-5 h-5 text-agri-400" />
-
-              <h3 className="font-bold text-agri-400">
-                {language === "hi"
-                  ? "तुरंत किए जाने वाले कार्य"
-                  : "Immediate Actions"}
-              </h3>
-
-            </div>
-
-            <div className="space-y-4">
-
-              {immediateActions.length > 0 ? (
-
-                immediateActions.map(
-                  (action, index) => (
-
-                    <div
-                      key={index}
-                      className="flex gap-3 text-sm text-slate-300"
-                    >
-
-                      <CheckCircle className="w-5 h-5 text-agri-400 shrink-0 mt-0.5" />
-
-                      <span>
-                        {action}
-                      </span>
-
-                    </div>
-
-                  )
-                )
-
-              ) : (
-
-                <p className="text-sm text-slate-500">
-                  {language === "hi"
-                    ? "कोई तत्काल कार्य उपलब्ध नहीं है।"
-                    : "No immediate actions available."}
-                </p>
-
-              )}
-
-            </div>
-
-          </div>
-
-          {/* PREVENTION */}
-
-          <div>
-
-            <div className="flex items-center gap-2 mb-4">
-
-              <ShieldCheck className="w-5 h-5 text-agri-400" />
-
-              <h3 className="font-bold text-agri-400">
-                {language === "hi"
-                  ? "बचाव के उपाय"
-                  : "Prevention Tips"}
-              </h3>
-
-            </div>
-
-            <div className="space-y-4">
-
-              {preventionTips.length > 0 ? (
-
-                preventionTips.map(
-                  (tip, index) => (
-
-                    <div
-                      key={index}
-                      className="flex gap-3 text-sm text-slate-300"
-                    >
-
-                      <ShieldCheck className="w-5 h-5 text-agri-400 shrink-0 mt-0.5" />
-
-                      <span>
-                        {tip}
-                      </span>
-
-                    </div>
-
-                  )
-                )
-
-              ) : (
-
-                <p className="text-sm text-slate-500">
-                  {language === "hi"
-                    ? "कोई बचाव उपाय उपलब्ध नहीं है।"
-                    : "No prevention tips available."}
-                </p>
-
-              )}
-
-            </div>
-
-          </div>
-
-        </div>
+        <button
+          onClick={() => navigate("/scan")}
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-agri-500 to-agri-600 text-slate-950 font-bold flex items-center justify-center gap-2"
+        >
+          <RefreshCw className="w-5 h-5" />
+          Scan Another Crop
+        </button>
 
       </div>
 
-      {/* =================================================
-          MONITORING
-      ================================================= */}
+    </div>
+  );
+}
 
-      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
 
-        <div className="flex items-center gap-3 mb-4">
+// =========================================================
+// REUSABLE COMPONENTS
+// =========================================================
 
-          <div className="p-3 rounded-xl bg-blue-500/10">
+function SectionTitle({ icon, title }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
 
-            <Eye className="w-6 h-6 text-blue-400" />
+      <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+        {icon}
+      </div>
 
-          </div>
+      <h2 className="text-xl font-extrabold text-white">
+        {title}
+      </h2>
 
-          <h2 className="text-xl font-bold text-white">
-            {language === "hi"
-              ? "निगरानी संबंधी सलाह"
-              : "Monitoring Advice"}
-          </h2>
+    </div>
+  );
+}
 
-        </div>
 
-        <p className="text-sm leading-7 text-slate-300">
-          {monitoringAdvice}
+function InfoBlock({ title, icon, children }) {
+  return (
+    <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-5">
+
+      <div className="flex items-center gap-2 mb-3">
+
+        <span className="text-agri-400">
+          {icon}
+        </span>
+
+        <h3 className="text-sm font-bold text-white">
+          {title}
+        </h3>
+
+      </div>
+
+      {children}
+
+    </div>
+  );
+}
+
+
+function SmallDetail({ label, value }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+        {label}
+      </p>
+
+      <p className="text-sm text-slate-300 mt-1">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+
+function WeatherCard({ icon, label, value }) {
+  return (
+    <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+
+      <div className="flex items-center gap-2 text-blue-400 mb-2">
+        {React.cloneElement(icon, {
+          className: "w-4 h-4",
+        })}
+
+        <span className="text-xs text-slate-500">
+          {label}
+        </span>
+      </div>
+
+      <p className="text-lg font-extrabold text-white">
+        {value}
+      </p>
+
+    </div>
+  );
+}
+
+
+function WeatherTimeline({
+  title,
+  data,
+}) {
+  return (
+    <div className="mb-8">
+
+      <div className="flex items-center gap-2 mb-4">
+
+        <CalendarDays className="w-5 h-5 text-agri-400" />
+
+        <h3 className="text-lg font-bold text-white">
+          {title}
+        </h3>
+
+      </div>
+
+      {!Array.isArray(data) || data.length === 0 ? (
+
+        <p className="text-sm text-slate-500">
+          Weather data not available.
         </p>
 
-      </div>
+      ) : (
 
-      {/* =================================================
-          CONFIDENCE NOTE
-      ================================================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
-      <div className="glass-panel p-6 rounded-3xl border border-slate-800">
+          {data.map((day, index) => (
 
-        <div className="flex items-start gap-4">
+            <div
+              key={index}
+              className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4"
+            >
 
-          <Activity className="w-6 h-6 text-agri-400 shrink-0" />
-
-          <div>
-
-            <h3 className="font-bold text-white mb-2">
-              {language === "hi"
-                ? "मॉडल विश्वसनीयता जानकारी"
-                : "Model Confidence Note"}
-            </h3>
-
-            <p className="text-sm leading-6 text-slate-400">
-              {confidenceNote}
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* =================================================
-          EXPERT CONSULTATION
-      ================================================= */}
-
-      {expertConsultationRequired && (
-
-        <div className="p-6 rounded-3xl bg-amber-500/10 border border-amber-500/30">
-
-          <div className="flex items-start gap-4">
-
-            <Stethoscope className="w-7 h-7 text-amber-400 shrink-0" />
-
-            <div>
-
-              <h3 className="font-bold text-amber-300">
-                {language === "hi"
-                  ? "विशेषज्ञ से परामर्श की सलाह"
-                  : "Expert Consultation Recommended"}
-              </h3>
-
-              <p className="text-sm text-amber-200/80 mt-2 leading-6">
-
-                {language === "hi"
-                  ? "उपचार करने से पहले स्थानीय कृषि विशेषज्ञ, कृषि वैज्ञानिक या विस्तार अधिकारी से निदान की पुष्टि करने पर विचार करें।"
-                  : "Consider confirming the diagnosis with a local agricultural expert, agronomist, or extension officer before applying treatment."}
-
+              <p className="text-xs font-bold text-agri-400 mb-3">
+                {day.date || `Day ${index + 1}`}
               </p>
+
+              <p className="text-sm text-white font-bold mb-3">
+                {day.min_temperature_c !== undefined &&
+                day.max_temperature_c !== undefined
+                  ? `${day.min_temperature_c}°C - ${day.max_temperature_c}°C`
+                  : "Temperature N/A"}
+              </p>
+
+              <div className="space-y-2 text-xs text-slate-400">
+
+                <div className="flex justify-between">
+                  <span>Rain</span>
+                  <span className="text-slate-200">
+                    {day.precipitation_mm ?? 0} mm
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Rain Chance</span>
+                  <span className="text-slate-200">
+                    {day.rain_probability_percent ?? 0}%
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Wind</span>
+                  <span className="text-slate-200">
+                    {day.max_wind_speed_kmh ?? "N/A"} km/h
+                  </span>
+                </div>
+
+              </div>
 
             </div>
 
-          </div>
+          ))}
 
         </div>
 
       )}
 
-      {/* =================================================
-          DISCLAIMER
-      ================================================= */}
+    </div>
+  );
+}
 
-      <div className="text-center pb-6">
 
-        <p className="text-xs text-slate-600 max-w-2xl mx-auto">
+function ObjectInfo({ title, value }) {
+  return (
+    <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5">
 
-          {language === "hi"
-            ? "यह AI द्वारा तैयार सलाह केवल निर्णय लेने में सहायता के लिए है और पेशेवर कृषि निदान का विकल्प नहीं है। फसल उपचार के लिए हमेशा स्थानीय रूप से स्वीकृत उत्पाद निर्देशों और विशेषज्ञ की सलाह का पालन करें।"
-            : "This AI-generated advisory is intended for decision support and does not replace professional agricultural diagnosis. Always follow locally approved product labels and expert recommendations for crop treatment."}
+      <p className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+        {title}
+      </p>
 
+      {Array.isArray(value) ? (
+
+        <ul className="space-y-2">
+          {value.map((item, index) => (
+            <li
+              key={index}
+              className="text-sm text-slate-300 flex gap-2"
+            >
+              <span className="text-agri-400">•</span>
+              <span>
+                {typeof item === "object"
+                  ? JSON.stringify(item)
+                  : item}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+      ) : (
+
+        <p className="text-sm text-slate-300 leading-6">
+          {value || "Not available"}
         </p>
 
-      </div>
+      )}
+
+    </div>
+  );
+}
+
+
+function ActionBlock({ title, value }) {
+  return (
+    <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5">
+
+      <h3 className="text-sm font-bold text-white mb-3">
+        {title}
+      </h3>
+
+      {!Array.isArray(value) || value.length === 0 ? (
+
+        <p className="text-sm text-slate-500">
+          No information available.
+        </p>
+
+      ) : (
+
+        <ul className="space-y-2">
+
+          {value.map((item, index) => (
+
+            <li
+              key={index}
+              className="flex items-start gap-3 text-sm text-slate-300"
+            >
+
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+
+              <span>
+                {typeof item === "object"
+                  ? JSON.stringify(item)
+                  : item}
+              </span>
+
+            </li>
+
+          ))}
+
+        </ul>
+
+      )}
 
     </div>
   );
