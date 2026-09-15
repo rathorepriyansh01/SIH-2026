@@ -90,51 +90,34 @@ class LLMService:
         try:
 
             response = self.client.chat.completions.create(
+            model="openai/gpt-oss-120b",
 
-                model="openai/gpt-oss-120b",
-
-                messages=[
-                    {
-                        "role": "system",
-
-                        "content": (
-                            "You are an agricultural advisory AI. "
-
-                            "Return ONLY valid JSON. "
-
-                            "Do not use markdown. "
-
-                            "Do not use ```json. "
-
-                            "Do not add explanations outside JSON. "
-
-                            "Do not invent weather data. "
-
-                            "Do not invent pesticide dosage. "
-
-                            "Do not invent missing farm data. "
-
-                            "The JSON keys must remain exactly "
-                            "as requested by the user prompt. "
-
-                            f"Generate all farmer-facing text "
-                            f"in {language}."
-                        )
-                    },
-
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-
-                temperature=0.2,
-
-                response_format={
-                    "type": "json_object"
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an agricultural advisory AI. "
+                        "Return ONLY valid JSON. "
+                        "Do not use markdown. "
+                        "Do not invent weather data, pesticide dosage, "
+                        "or missing farm data. "
+                        f"Generate farmer-facing text in {language}."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": prompt
                 }
-            )
+            ],
 
+            temperature=0.2,
+
+            max_tokens=3000,
+
+            response_format={
+                "type": "json_object"
+            }
+        )
 
             # =================================================
             # READ RESPONSE
