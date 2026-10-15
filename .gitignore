@@ -51,4 +51,16 @@ Thumbs.db
 # ─── Logs / temp ─────────────────────────────────────────────
 *.log
 *.tmp
-*.bak
+*.bak
+
+
+
+node_modules/
+frontend/node_modules/
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+__pycache__/
+.env
+dist/
