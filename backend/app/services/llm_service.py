@@ -17,13 +17,15 @@ class LLMService:
         api_key = os.getenv("GROQ_API_KEY")
 
         if not api_key:
-            raise ValueError(
-                "GROQ_API_KEY not found. Check your .env file."
+            print(
+                "WARNING: GROQ_API_KEY not set. "
+                "AI advisory will use fallback responses."
             )
-
-        self.client = Groq(
-            api_key=api_key
-        )
+            self.client = None
+        else:
+            self.client = Groq(
+                api_key=api_key
+            )
 
 
     # =====================================================
@@ -87,10 +89,15 @@ class LLMService:
         # GROQ REQUEST
         # =================================================
 
+        if self.client is None:
+            raise ValueError(
+                "GROQ_API_KEY is not configured. Cannot call LLM."
+            )
+
         try:
 
             response = self.client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+            model="llama-3.3-70b-versatile",
 
             messages=[
                 {

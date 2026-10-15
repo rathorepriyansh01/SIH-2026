@@ -1,4 +1,54 @@
+# ─── Secrets ─────────────────────────────────────────────────
 .env
-venv/
+.env.*
+!.env.example
+
+# ─── Python ──────────────────────────────────────────────────
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.so
+.Python
+
+# ─── Virtual environments ─────────────────────────────────────
+venv/
+.venv/
+env/
+backend/venv/
+
+# ─── Node / Frontend ─────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# ─── Database files ──────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Uploads (runtime-generated, not tracked) ────────────────
+backend/uploads/
+
+# ─── ML dataset (large, not needed in repo) ──────────────────
+ml/dataset/
+
+# ─── Model files: keep .pth files (needed for Render deploy) ─
+# Uncomment the line below if you move models to external storage
+# ml/models/*.pth
+
+# ─── IDE / OS ─────────────────────────────────────────────────
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# ─── Logs / temp ─────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
