@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000') + '/api';
+const API_BASE_URL =
+  "https://crop-health-ai-backend.onrender.com/api";
 
-export const SERVER_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
-
+export const SERVER_URL =
+  "https://crop-health-ai-backend.onrender.com";
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 60000,
