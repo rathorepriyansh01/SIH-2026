@@ -7,7 +7,7 @@ export const SERVER_URL =
   "https://crop-health-ai-backend.onrender.com";
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000,
+  timeout: 300000,
 });
 
 
