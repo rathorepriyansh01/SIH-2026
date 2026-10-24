@@ -37,13 +37,13 @@ _raw_origins = os.environ.get("ALLOWED_ORIGINS", "")
 ALLOWED_ORIGINS = (
     [o.strip() for o in _raw_origins.split(",") if o.strip()]
     if _raw_origins
-    else ["*"]
+    else ["https://sih-2026-green-phi.vercel.app/"]
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
